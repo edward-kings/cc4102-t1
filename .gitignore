@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# Binaries folder
+bin/
+
+# Virtual Environment folder
+/.venv
+
+# PDFs
+*.pdf
