@@ -8,5 +8,7 @@ int main() {
     generateRectanglesFile(rectangulos,"rectangulos.bin",true, 1 << 10,3,false);
     std::fstream querys;
     generateRectanglesFile(querys,"querys.bin",true, 1 << 10, 2, true);
+    rectangulos.close();
+    querys.close();
     return 0;
 }

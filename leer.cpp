@@ -15,5 +15,6 @@ int main() {
         cout << "Largo: " << buffer[i].x2 - buffer[i].x1 << endl;
         cout << "Ancho: " << buffer[i].y2 - buffer[i].y1 << endl;
     }
+    rect.close();
     return 0;
 }
