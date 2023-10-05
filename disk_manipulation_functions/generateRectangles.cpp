@@ -35,7 +35,7 @@ void generateRectanglesFile(fstream &rectFile,string filename, bool eraseContent
             }
         }
     }
-    if (rectangleNumber == (rectanglesPerBlock - 1)) {
+    if (rectangleNumber != (rectanglesPerBlock - 1)) {
         bool failure = binPageWrite(rectFile, buffer);
         if (failure) {
                 cerr << "Couldn't write a rectangle: " << strerror(errno) << endl;
