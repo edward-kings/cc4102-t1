@@ -19,9 +19,7 @@ void generateRectanglesFile(fstream &rectFile,string filename, bool eraseContent
         y2 = min(y1 + (rand() % maxSideSize),500000);
 
         rectangleNumber = i % rectanglesPerBlock;
-        if (i < rectanglesPerBlock) {
-            cout << "Rect: (" << x1 << "," << y1 << "," << x2 << "," << y2 << ")" <<endl;
-        }
+
         buffer[rectangleNumber].x1 = x1;
         buffer[rectangleNumber].x2 = x2;
         buffer[rectangleNumber].y1 = y1;
