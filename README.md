@@ -16,7 +16,11 @@ Teniendo make correr
 ```bash
 $ make
 ```
-Para crear el archivo `crear.exe`, al ser ejecutado, crea los archivos `rectangulos.bin` y `querys.bin` que contienen los rectangulos de R y Q respectivamente
+Para crear el archivo `crear.exe`, al ser ejecutado, crea los archivos `rectangulos.bin` y `querys.bin` que contienen los rectangulos de R y Q respectivamente.
+Por defecto se crean 1024 rectangulos usando como semilla el numero 3 y las querys con semilla 4, para usar semillas y cantidades personalizadas, ejecutar `crear.exe` de la siguiente manera
+```bash
+$ ./crear.exe <Semilla R> <Semilla Q> <Cantidad de rectangulos> 
+```
 
 
 Para leer todos los rectangulos que caben en el primer bloque de disco ejecutar
