@@ -1,6 +1,10 @@
-#include <fstream>
-#include <iostream>
-#include "../Rect.hpp"
+#ifndef BINARY_FILE_FUNCTIONS
+#define BINARY_FILE_FUNCTIONS
+
+#include <cstdio>
+#include <string>
+#include "../estructuras/Rect.hpp"
+#include "../estructuras/RTreeNode.hpp"
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -11,6 +15,13 @@
 unsigned long getDiskBlockSize();
 extern unsigned long diskBlockSize;
 extern unsigned int rectanglesPerBlock;
-bool binPageWrite(std::fstream &file, Rect* buffer);
-bool binPageRead(std::fstream &file, Rect* buffer);
-void binOpen(std::string filename, bool eraseContents, std::fstream &file);
+unsigned int binRectPageWrite(FILE* &file, Rect* buffer);
+unsigned int binRectPageRead(FILE* &file, Rect* buffer);
+unsigned int binNodePageWrite(FILE* &file, RTreeNode* buffer);
+unsigned int binNodePageRead(FILE* &file, RTreeNode* buffer);
+FILE* binOpen(std::string filename, bool eraseContents);
+unsigned long binGetCurrentOffset(FILE* &file);
+unsigned int binPageSeekFromStart(FILE* &file, long offset);
+
+
+#endif

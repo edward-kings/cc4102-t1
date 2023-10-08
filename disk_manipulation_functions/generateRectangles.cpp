@@ -1,11 +1,10 @@
 #include <iostream>
-#include <fstream>
 #include "binaryFileFunctions.hpp"
 #include <string.h>
 using namespace std;
 
-void generateRectanglesFile(fstream &rectFile,string filename, bool eraseContents, unsigned long amountOfRectangles, unsigned int seed, bool isSetQ) {
-    binOpen(filename,eraseContents,rectFile);
+FILE* generateRectanglesFile(string filename, bool eraseContents, unsigned long amountOfRectangles, unsigned int seed, bool isSetQ) {
+    FILE* rectFile = binOpen(filename,eraseContents);
     srand(seed);
     Rect* buffer = new Rect[rectanglesPerBlock];
     unsigned int rectangleNumber;
@@ -26,18 +25,28 @@ void generateRectanglesFile(fstream &rectFile,string filename, bool eraseContent
         buffer[rectangleNumber].y2 = y2;
 
         if (rectangleNumber == (rectanglesPerBlock - 1)) {
-            bool failure = binPageWrite(rectFile, buffer);
-            if (failure) {
-                cerr << "Couldn't write a rectangle: " << strerror(errno) << endl;
-                exit(1);
+            unsigned int elements = binRectPageWrite(rectFile, buffer);
+            cout << elements << endl;
+            if (elements != rectanglesPerBlock) {
+                if (feof(rectFile)) {
+                    // Handle end of file error
+                    std::cerr << "Error: End of file reached before all rectangles were written." << std::endl;
+                } else {
+                    // Handle mismatched element count error
+                    std::cerr << "Error: Mismatched number of elements written to file." << std::endl;
+                }
             }
         }
     }
     if (rectangleNumber != (rectanglesPerBlock - 1)) {
-        bool failure = binPageWrite(rectFile, buffer);
-        if (failure) {
-                cerr << "Couldn't write a rectangle: " << strerror(errno) << endl;
-                exit(1);
+        unsigned int elements = binRectPageWrite(rectFile, buffer);
+        if (elements != rectanglesPerBlock) {
+            if (!feof(rectFile)) {
+                    // Handle end of file error
+                    std::cerr << "Error: End of file reached before all rectangles were written." << std::endl;
+            }
         }
     }
+    delete[] buffer;
+    return rectFile;
 }
