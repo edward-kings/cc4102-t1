@@ -42,3 +42,6 @@ bin/
 
 # .bin files
 *.bin
+
+# Personal VSCode configuration folder
+.vscode/
