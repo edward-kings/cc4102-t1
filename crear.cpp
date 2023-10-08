@@ -12,11 +12,11 @@ int main(int argc, char** argv) {
         seed2 = atoi(argv[2]);
         amount = argc == 4 ? atoi(argv[3]) : amount;
     }
-    std::fstream rectangulos;
-    generateRectanglesFile(rectangulos,"rectangulos.bin",true, amount,seed1,false);
-    std::fstream querys;
-    generateRectanglesFile(querys,"querys.bin",true, 100, seed2, true);
-    rectangulos.close();
-    querys.close();
+    FILE* rectFile;
+    rectFile = generateRectanglesFile("rectangulos.bin",true, amount,seed1,false);
+    FILE* querys;
+    querys = generateRectanglesFile("querys.bin",true, 100, seed2, true);
+    fclose(rectFile);
+    fclose(querys);
     return 0;
 }
