@@ -39,3 +39,6 @@ bin/
 
 # PDFs
 *.pdf
+
+# .bin files
+*.bin
