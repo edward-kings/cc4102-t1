@@ -41,8 +41,8 @@ void NearestXAlgorithm::buildTree(FILE*& rectsFile) {
     node.lastChildIndex = binGetCurrentOffset(this->sortedRectsFile) - 1;
     node.MBR.x1 = rectBuffer[0].x1;
     node.MBR.y1 = rectBuffer[0].y1;
-    node.MBR.x2 = rectBuffer[node.lastChildIndex].x2;
-    node.MBR.y2 = rectBuffer[node.lastChildIndex].y2;
+    node.MBR.x2 = rectBuffer[rectanglesPerBlock-1].x2;
+    node.MBR.y2 = rectBuffer[rectanglesPerBlock-1].y2;
     unsigned int nodeNumber = i % nodesPerBlock;
     nodeBuffer[nodeNumber] = node;
     if (nodeNumber == nodesPerBlock - 1) {
