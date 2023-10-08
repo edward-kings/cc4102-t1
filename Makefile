@@ -2,7 +2,8 @@ CODEDIRS=. ./algoritmos ./estructuras ./disk_manipulation_functions
 INCDIRS=. ./algoritmos ./estructuras ./disk_manipulation_functions
 
 SOURCE := $(foreach D, $(CODEDIRS), $(wildcard $(D)/*.cpp))
-LIBS := $(filter-out ./leer.cpp ./main.cpp ./crear.cpp, $(SOURCE))
+EXCLUDE := ./leer.cpp ./main.cpp ./crear.cpp
+LIBS := $(filter-out $(EXCLUDE), $(SOURCE))
 OBJS	= $(patsubst %.cpp,%.o,$(LIBS))
 DEPFILES = $(patsubst %.cpp,%.d,$(SOURCE))
 
@@ -29,7 +30,7 @@ leer.exe: leer.cpp $(OBJS)
 clean:
 	rm -f $(OBJS) $(DEPFILES) $(OUT)
 	rm -f querys.bin rectangulos.bin
-	
+
 wclean:
 	del /Q /S $(notdir $(OBJS)) $(notdir $(DEPFILES)) $(notdir $(OUT))
 	del /Q querys.bin rectangulos.bin
