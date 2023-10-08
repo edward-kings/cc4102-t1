@@ -1,26 +1,35 @@
-OBJS	= crear.o binaryFileFunctions.o generateRectangles.o
-SOURCE	= crear.cpp ./disk_manipulation_functions/binaryFileFunctions.cpp ./disk_manipulation_functions/generateRectangles.cpp
-HEADER	= Rect.h
-OUT	= crear.exe
+CODEDIRS=. ./algoritmos ./estructuras ./disk_manipulation_functions
+INCDIRS=. ./algoritmos ./estructuras ./disk_manipulation_functions
+
+SOURCE := $(foreach D, $(CODEDIRS), $(wildcard $(D)/*.cpp))
+LIBS := $(filter-out ./leer.cpp ./main.cpp ./crear.cpp, $(SOURCE))
+OBJS	= $(patsubst %.cpp,%.o,$(LIBS))
+DEPFILES = $(patsubst %.cpp,%.d,$(SOURCE))
+
+OUT	= crear.exe leer.exe main.exe
 CC	 = g++
-FLAGS	 = -g -c -Wall
-LFLAGS	 = 
+DEPFLAGS= $(foreach D, $(INCDIRS), -I$(D)) -MP -MD
+FLAGS	 = -Wall -std=c++17
+OBJFLAGS = -c -o
 
-all: $(OBJS)
-	$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)
+all: $(OUT)
 
-crear.o: crear.cpp
-	$(CC) $(FLAGS) crear.cpp -std=c++17
+crear.exe: crear.cpp $(OBJS)
+	$(CC) -g $^ -o $@
 
-binaryFileFunctions.o: ./disk_manipulation_functions/binaryFileFunctions.cpp
-	$(CC) $(FLAGS) ./disk_manipulation_functions/binaryFileFunctions.cpp -std=c++17
+main.exe: main.cpp $(OBJS)
+	$(CC) -g $^ -o $@
 
-generateRectangles.o: ./disk_manipulation_functions/generateRectangles.cpp
-	$(CC) $(FLAGS) ./disk_manipulation_functions/generateRectangles.cpp -std=c++17
+leer.exe: leer.cpp $(OBJS)
+	$(CC) -g $^ -o $@
 
+%.o: %.cpp
+	$(CC) $(FLAGS) $(DEPFLAGS) $(OBJFLAGS) $@ $<
 
 clean:
-	rm -f $(OBJS) $(OUT)
-
+	rm -f $(OBJS) $(DEPFILES) $(OUT)
+	rm -f querys.bin rectangulos.bin
+	
 wclean:
-	erase $(OBJS) $(OUT)
+	del /Q /S $(notdir $(OBJS)) $(notdir $(DEPFILES)) $(notdir $(OUT))
+	del /Q querys.bin rectangulos.bin
