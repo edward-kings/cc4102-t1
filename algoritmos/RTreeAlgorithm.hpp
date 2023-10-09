@@ -12,15 +12,15 @@ extern unsigned int nodesPerBlock;
 class RTreeAlgorithm {
 public:
   virtual ~RTreeAlgorithm() {}
-  virtual void buildTree(FILE*& rectsFile) = 0;
-  virtual std::vector<FILE*> getTreeFiles() = 0;
-  virtual void setTreeFiles(std::vector<FILE*> &treeFiles) = 0;
+  virtual unsigned int buildTree(std::string filename) = 0;
+  virtual std::string getTreeFileBaseName() = 0;
 protected:
   virtual int getNumberOfRects() = 0;
   virtual int getMaxNodeCapacity() = 0;
   virtual bool orderCriteria(const Rect& rect1, const Rect& rect2) = 0;
-  virtual FILE*& getSortedRectsFile() = 0;
-  void externalMergeSort(FILE*& rectsFile);
+  virtual std::string getSortedRectsFileName() = 0;
+  virtual void setSortedRectsFileName(std::string sortedRectsFileName) = 0;
+  void externalMergeSort(std::string filename);
 };
 
 #endif // RTREE_ALGORITHM_H
