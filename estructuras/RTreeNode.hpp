@@ -5,8 +5,8 @@
 
 struct RTreeNode {
   Rect MBR;
-  unsigned long firstChildIndex;
-  unsigned long lastChildIndex;
+  unsigned int firstChildIndex;
+  unsigned int lastChildIndex;
 };
 
 #endif
