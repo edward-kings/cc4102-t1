@@ -5,6 +5,7 @@
 #include <string>
 #include "../estructuras/Rect.hpp"
 #include "../estructuras/RTreeNode.hpp"
+#include "../algoritmos/RTreeAlgorithm.hpp"
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -12,16 +13,14 @@
 #include <sys/statvfs.h>
 #endif
 
-unsigned long getDiskBlockSize();
-extern unsigned long diskBlockSize;
+unsigned int getDiskBlockSize();
+extern unsigned int diskBlockSize;
 extern unsigned int rectanglesPerBlock;
-unsigned int binRectPageWrite(FILE* &file, Rect* buffer);
-unsigned int binRectPageRead(FILE* &file, Rect* buffer);
-unsigned int binNodePageWrite(FILE* &file, RTreeNode* buffer);
-unsigned int binNodePageRead(FILE* &file, RTreeNode* buffer);
-FILE* binOpen(std::string filename, bool eraseContents);
-unsigned long binGetCurrentOffset(FILE* &file);
-unsigned int binPageSeekFromStart(FILE* &file, long offset);
+extern unsigned int nodesPerBlock;
+unsigned int binRectPageWrite(std::ofstream &file, Rect* buffer, unsigned int rectanglesToWrite = rectanglesPerBlock);
+unsigned int binRectPageRead(std::ifstream &file, Rect* buffer, unsigned int rectanglesToRead = rectanglesPerBlock);
+unsigned int binNodePageWrite(std::ofstream &file, RTreeNode* buffer, unsigned int nodesToWrite = nodesPerBlock);
+unsigned int binNodePageRead(std::ifstream &file, RTreeNode* buffer, unsigned int nodesToRead = nodesPerBlock);
 
 
 #endif

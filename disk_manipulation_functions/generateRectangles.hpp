@@ -4,6 +4,6 @@
 #include "binaryFileFunctions.hpp"
 #include <string.h>
 
-FILE* generateRectanglesFile(std::string filename, bool eraseContents, unsigned long amountOfRectangles, unsigned int seed, bool isSetQ);
+void generateRectanglesFile(std::string filename, bool eraseContents, unsigned int amountOfRectangles, unsigned int seed, bool isSetQ);
 
 #endif

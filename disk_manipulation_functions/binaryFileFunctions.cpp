@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include <fstream>
 #include "../estructuras/Rect.hpp"
 #include "../estructuras/RTreeNode.hpp"
 #include "../algoritmos/RTreeAlgorithm.hpp"
@@ -11,7 +12,7 @@
 #endif
 
 
-unsigned long getDiskBlockSize() {
+unsigned int getDiskBlockSize() {
 #ifdef _WIN32
     DWORD sectorsPerCluster, bytesPerSector, freeClusters, totalClusters;
 
@@ -35,45 +36,32 @@ unsigned long getDiskBlockSize() {
 }
 
 
-unsigned long diskBlockSize = getDiskBlockSize();
+unsigned int diskBlockSize = getDiskBlockSize();
 unsigned int rectanglesOverLimit = diskBlockSize % sizeof(Rect);
 
 unsigned int rectanglesPerBlock = rectanglesOverLimit == 0 ? 
                             diskBlockSize / sizeof(Rect)  :
                             diskBlockSize / sizeof(Rect)  - rectanglesOverLimit;
 
-unsigned int binRectPageWrite(FILE* &file, Rect* buffer) {
-    return fwrite(buffer,sizeof(Rect),rectanglesPerBlock,file);
+unsigned int binRectPageWrite(std::ofstream &file, Rect* buffer, unsigned int rectanglesToWrite) {
+    unsigned int seekBefore = file.tellp();
+    file.write(reinterpret_cast<char*>(buffer), sizeof(Rect) * rectanglesToWrite);
+    return (unsigned int) file.tellp() - seekBefore;
 }
 
-unsigned  int binNodePageWrite(FILE* &file, RTreeNode* buffer) {
-    return fwrite(buffer,sizeof(RTreeNode),nodesPerBlock,file);
+unsigned  int binNodePageWrite(std::ofstream &file, RTreeNode* buffer, unsigned int nodesToWrite) {
+    unsigned int seekBefore = file.tellp();
+    file.write(reinterpret_cast<char*>(buffer), sizeof(RTreeNode) * nodesToWrite);
+    return (unsigned int) file.tellp() - seekBefore;
 }
 
 
-unsigned  int binPageSeekFromStart(FILE* &file, long offset) {
-    return fseek(file,offset,SEEK_SET);
+unsigned int binRectPageRead(std::ifstream &file, Rect* buffer, unsigned int rectanglesToRead) {
+    file.read(reinterpret_cast<char*>(buffer), sizeof(Rect) * rectanglesToRead);
+    return (unsigned int) file.gcount();
 }
 
-unsigned long binGetCurrentOffset(FILE* &file) {
-    return ftell(file);
-}
-
-unsigned int binRectPageRead(FILE* &file, Rect* buffer) {
-    return fread(buffer,sizeof(Rect),rectanglesPerBlock,file);
-}
-
-unsigned int binNodePageRead(FILE* &file, RTreeNode* buffer) {
-    return fread(buffer,sizeof(RTreeNode),nodesPerBlock,file);
-}
-
-FILE* binOpen(std::string filename, bool eraseContents) {
-    const char* mode = eraseContents ? "wb+" : "ab+";
-    FILE* file = new FILE;
-    file = fopen(filename.c_str(),mode);
-    if (!file) {
-        std::cerr << "Could not open the file!" << std::endl;
-        exit(1);
-    }
-    return file;
+unsigned int binNodePageRead(std::ifstream &file, RTreeNode* buffer, unsigned int nodesToRead) {
+    file.read(reinterpret_cast<char*>(buffer), sizeof(RTreeNode) * nodesToRead);
+    return (unsigned int) file.gcount();
 }

@@ -1,21 +1,27 @@
 #include <iostream>
 #include "binaryFileFunctions.hpp"
 #include <string.h>
+#include <random>
+#include <fstream>
 using namespace std;
 
-FILE* generateRectanglesFile(string filename, bool eraseContents, unsigned long amountOfRectangles, unsigned int seed, bool isSetQ) {
-    FILE* rectFile = binOpen(filename,eraseContents);
-    srand(seed);
+void generateRectanglesFile(string filename, bool eraseContents, unsigned int amountOfRectangles, unsigned int seed, bool isSetQ) {
+    std::ios::openmode mode = eraseContents ? std::ios::trunc : std::ios::app;
+    std::ofstream rectFile(filename, std::ios::out | std::ios::binary | mode);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    gen.seed(seed);
+    std::uniform_int_distribution<unsigned int> distrib(0U, 500000U);
     Rect* buffer = new Rect[rectanglesPerBlock];
-    unsigned int rectangleNumber;
-    for (unsigned long i = 0; i < amountOfRectangles; i++) {
+    unsigned int rectangleNumber = 0;
+    for (unsigned int i = 0; i < amountOfRectangles; i++) {
         int x1,y1,x2,y2;
-        int maxSideSize = isSetQ ? 100001 : 101;
+        int maxSideSize = isSetQ ? 100001U : 101U;
 
-        x1 = rand() % 500001;
-        y1 = rand() % 500001;
-        x2 = min(x1 + (rand() % maxSideSize),500000); 
-        y2 = min(y1 + (rand() % maxSideSize),500000);
+        x1 = distrib(gen);
+        y1 = distrib(gen);
+        x2 = min(x1 + (distrib(gen) % maxSideSize),500000U); 
+        y2 = min(y1 + (distrib(gen) % maxSideSize),500000U);
 
         rectangleNumber = i % rectanglesPerBlock;
 
@@ -25,28 +31,12 @@ FILE* generateRectanglesFile(string filename, bool eraseContents, unsigned long 
         buffer[rectangleNumber].y2 = y2;
 
         if (rectangleNumber == (rectanglesPerBlock - 1)) {
-            unsigned int elements = binRectPageWrite(rectFile, buffer);
-            cout << elements << endl;
-            if (elements != rectanglesPerBlock) {
-                if (feof(rectFile)) {
-                    // Handle end of file error
-                    std::cerr << "Error: End of file reached before all rectangles were written." << std::endl;
-                } else {
-                    // Handle mismatched element count error
-                    std::cerr << "Error: Mismatched number of elements written to file." << std::endl;
-                }
-            }
+            rectFile.write(reinterpret_cast<char*>(buffer), sizeof(Rect) * rectanglesPerBlock);
         }
     }
     if (rectangleNumber != (rectanglesPerBlock - 1)) {
-        unsigned int elements = binRectPageWrite(rectFile, buffer);
-        if (elements != rectanglesPerBlock) {
-            if (!feof(rectFile)) {
-                    // Handle end of file error
-                    std::cerr << "Error: End of file reached before all rectangles were written." << std::endl;
-            }
-        }
+            rectFile.write(reinterpret_cast<char*>(buffer), sizeof(Rect) * (rectangleNumber + 1));
     }
     delete[] buffer;
-    return rectFile;
+    rectFile.close();
 }
