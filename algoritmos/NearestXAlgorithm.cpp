@@ -1,8 +1,11 @@
 #include <iostream>
 #include <fstream>
-#include <cstring>
+#include <string>
 #include <math.h>
 #include "NearestXAlgorithm.hpp"
+#include "../estructuras/Rect.hpp"
+#include "../disk_manipulation_functions/binaryFileFunctions.hpp"
+#include "../estructuras/RTreeNode.hpp"
 
 NearestXAlgorithm::NearestXAlgorithm(int maxNodeCapacity, unsigned int numberOfRects) {
   this->maxNodeCapacity = maxNodeCapacity;
@@ -87,7 +90,7 @@ unsigned int NearestXAlgorithm::buildTree(std::string filename) {
         node.MBR.x2 = rectBuffer[lastIndexInBuf].x2;
         node.MBR.y2 = rectBuffer[lastIndexInBuf].y2;
       }
-      nodeBuffer[nodeNumber] = node;
+      nodeBuffer[nodeNumber % nodesPerBlock] = node;
       nodeNumber++;
       firstChildIndex = lastChildIndex + sizeof(Rect);
       lastChildIndex = firstChildIndex + (this->maxNodeCapacity - 1) * sizeof(Rect);
@@ -100,15 +103,16 @@ unsigned int NearestXAlgorithm::buildTree(std::string filename) {
         previousRecty1 = rectBuffer[firstIndexInBuf].y1;
         break;
       }
+      // A whole page can be written right now
       if (nodeNumber == nodesPerBlock - 1) {
         binNodePageWrite(firstTreeFile,nodeBuffer);
       }
       if (nodeNumber == amountOfNodes) break;
     }
-
   }
+  // The buffer was not filled but we still need to write the remaining nodes
   if (nodeNumber != nodesPerBlock -1) {
-    binNodePageWrite(firstTreeFile,nodeBuffer,nodeNumber);
+    binNodePageWrite(firstTreeFile,nodeBuffer,(nodeNumber % nodesPerBlock));
   }
   delete[] rectBuffer;
   delete[] nodeBuffer;
@@ -156,7 +160,7 @@ unsigned int NearestXAlgorithm::buildTreeRecursive(unsigned int fileIndex, unsig
       node.MBR.y1 = previousNodeBuffer[firstIndexInBuf].MBR.y1;
       node.MBR.x2 = previousNodeBuffer[lastIndexInBuf].MBR.x2;
       node.MBR.y2 = previousNodeBuffer[lastIndexInBuf].MBR.y2;
-      currentNodeBuffer[nodeNumber] = node;
+      currentNodeBuffer[nodeNumber % nodesPerBlock] = node;
       nodeNumber++;
       firstChildIndex = lastChildIndex + sizeof(RTreeNode);
       potentialLastChildIndex = firstChildIndex + (this->maxNodeCapacity - 1) * sizeof(RTreeNode);
@@ -169,7 +173,7 @@ unsigned int NearestXAlgorithm::buildTreeRecursive(unsigned int fileIndex, unsig
     }
   }
   if (nodeNumber != nodesPerBlock -1) {
-    binNodePageWrite(currentTreeFile,currentNodeBuffer,nodeNumber);
+    binNodePageWrite(currentTreeFile,currentNodeBuffer,(nodeNumber % nodesPerBlock));
   }
   previousTreeFile.close();
   currentTreeFile.close();
