@@ -1,35 +1,40 @@
-#include "RTreeAlgorithm.hpp"
 #include <queue>
 #include <fstream>
 #include <algorithm>
 #include <vector>
 #include <iostream>
-
-unsigned int nodesPerBlock = diskBlockSize % sizeof(RTreeNode) == 0 ? 
-                            diskBlockSize / sizeof(RTreeNode)  :
-                            diskBlockSize / sizeof(RTreeNode)  - diskBlockSize % sizeof(RTreeNode);
+#include <string>
+#include "RTreeAlgorithm.hpp"
+#include "../estructuras/Rect.hpp"
+#include "../disk_manipulation_functions/binaryFileFunctions.hpp"
+#include "../estructuras/RTreeNode.hpp"
 
 void RTreeAlgorithm::externalMergeSort(std::string filename) {
   // Step 1: Read the input file in chunks and sort each chunk
     std::ifstream rectsFile(filename, std::ios::in | std::ios::binary);
     Rect* buffer = new Rect[rectanglesPerBlock];
     int chunkNumber = 0;
+    unsigned int chunkSize = 0;
     while (rectsFile) {
         long sizeRead = binRectPageRead(rectsFile,buffer) / sizeof(Rect);
-
-        if (sizeRead > 0) {
+        std::ofstream chunk("chunk_" + std::to_string(chunkNumber) + ".bin", std::ios::out | std::ios::binary | std::ios::trunc);
+        while (sizeRead > 0) {
             std::sort(buffer, buffer + sizeRead, [this](Rect& rect1, Rect& rect2) -> bool {return this->orderCriteria(rect1,rect2);});
 
             // Write each chunk to a temporary file
-            std::ofstream chunk("chunk_" + std::to_string(chunkNumber++) + ".bin", std::ios::out | std::ios::binary);
-
+            
             binRectPageWrite(chunk,buffer);
-
-            chunk.close();
+            chunkSize += sizeRead;
+            if (chunkSize >= (diskBlockSize * 3000) / sizeof(Rect)) {
+                chunkNumber++;
+                chunkSize = 0;
+                chunk.close();
+                chunk = std::ofstream("chunk_" + std::to_string(chunkNumber) + ".bin", std::ios::out | std::ios::binary | std::ios::trunc);
+            }
+            sizeRead = binRectPageRead(rectsFile,buffer) / sizeof(Rect);
         }
-        else {
-            break;
-    }
+        if (sizeRead == 0) break;
+        if (chunk.is_open()) chunk.close();
     }
 
     // Step 2: Perform the external merge
