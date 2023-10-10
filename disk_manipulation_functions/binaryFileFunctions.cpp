@@ -43,6 +43,10 @@ unsigned int rectanglesPerBlock = rectanglesOverLimit == 0 ?
                             diskBlockSize / sizeof(Rect)  :
                             diskBlockSize / sizeof(Rect)  - rectanglesOverLimit;
 
+unsigned int nodesPerBlock = diskBlockSize % sizeof(RTreeNode) == 0 ? 
+                            diskBlockSize / sizeof(RTreeNode)  :
+                            diskBlockSize / sizeof(RTreeNode)  - diskBlockSize % sizeof(RTreeNode);
+
 unsigned int binRectPageWrite(std::ofstream &file, Rect* buffer, unsigned int rectanglesToWrite) {
     unsigned int seekBefore = file.tellp();
     file.write(reinterpret_cast<char*>(buffer), sizeof(Rect) * rectanglesToWrite);
