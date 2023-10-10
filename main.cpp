@@ -63,6 +63,9 @@ int main() {
         ioSum = 0;
         results.close();
         outPutFile << output.str();
+        delete[] querys;
+        delete tree;
+        delete nearestX;
     }
     std::cout << "Total IOs: " << totalIoSum << std::endl;
     outPutFile.close();
