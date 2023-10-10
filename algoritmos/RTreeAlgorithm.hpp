@@ -7,8 +7,6 @@
 #include <vector>
 #include <cstdio>
 
-extern unsigned int nodesPerBlock;
-
 class RTreeAlgorithm {
 public:
   virtual ~RTreeAlgorithm() {}
