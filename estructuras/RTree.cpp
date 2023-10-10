@@ -1,6 +1,11 @@
 #include "RTree.hpp"
 #include <iostream>
 #include <math.h>
+#include <fstream>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include "../algoritmos/RTreeAlgorithm.hpp"
 #include "../disk_manipulation_functions/binaryFileFunctions.hpp"
 
 RTree::RTree(int maxNodeCapacity, RTreeAlgorithm* algorithm, unsigned int numberOfRects) {
@@ -53,6 +58,7 @@ void RTree::searchRecursive(Rect region, int currentFileIndex, unsigned int firs
         result.push_back(i);
       }
     }
+    delete[] rects;
   } else {
     RTreeNode* nodes = new RTreeNode[nodesPerBlock];
     std::string filename = this->treeFileBaseName + std::to_string(currentFileIndex) + ".bin";

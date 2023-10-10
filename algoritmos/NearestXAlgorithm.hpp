@@ -2,7 +2,8 @@
 #define NEAREST_X_ALGORITHM_H
 
 #include "RTreeAlgorithm.hpp"
-
+#include <string>
+#include "../estructuras/Rect.hpp"
 class NearestXAlgorithm : public RTreeAlgorithm {
 public:
   NearestXAlgorithm(int maxNodeCapacity, unsigned int numberOfRects);
