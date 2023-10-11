@@ -40,34 +40,31 @@ std::vector<unsigned int> RTree::search(Rect region) {
 }
 
 void RTree::searchRecursive(Rect region, int currentFileIndex, unsigned int firstChildIndex, unsigned int lastChildIndex, std::vector<unsigned int>& result) {
+  unsigned int amountOfBytesToRead = lastChildIndex - firstChildIndex;
   if (currentFileIndex == -1) {
     std::ifstream leafFile("sortedRects.bin",std::ios::in|std::ios::binary);
-    Rect* rects = new Rect[rectanglesPerBlock];
-    binRectPageRead(leafFile,rects);
-    this->totalSearchIOs++;
-    int reads = 1;
-    for (unsigned int i = firstChildIndex; i <= lastChildIndex; i+=sizeof(Rect)) {
-      while (i / sizeof(Rect) >= rectanglesPerBlock * reads) {
-        binRectPageRead(leafFile,rects);
-        this->totalSearchIOs++;
-        reads++;
-      }
+    Rect* rects = new Rect[(amountOfBytesToRead / sizeof(Rect)) + 1];
+    leafFile.seekg(firstChildIndex,std::ios::beg);
+    binRectPageRead(leafFile,rects,amountOfBytesToRead / sizeof(Rect) + 1);
+    this->totalSearchIOs+= std::ceil((double)amountOfBytesToRead / (double)diskBlockSize);
+    unsigned int currentRectIndex = firstChildIndex;
+    for (unsigned int i = 0; i <= amountOfBytesToRead / sizeof(Rect); i++) {
       Rect leaf;
-      leaf = rects[(i / sizeof(Rect)) % rectanglesPerBlock];
+      leaf = rects[i];
       if (RTree::intersects(region,leaf)) {
-        result.push_back(i);
+        result.push_back(currentRectIndex);
       }
+      currentRectIndex+=sizeof(Rect);
     }
     delete[] rects;
   } else {
-    RTreeNode* nodes = new RTreeNode[nodesPerBlock];
+    RTreeNode* nodes = new RTreeNode[(amountOfBytesToRead / sizeof(RTreeNode)) + 1];
     std::string filename = this->treeFileBaseName + std::to_string(currentFileIndex) + ".bin";
     std::ifstream treeFile(filename, std::ios::in | std::ios::binary);
-    binNodePageRead(treeFile,nodes);
-    this->totalSearchIOs++;
-    int nodesRead = treeFile.gcount() / sizeof(RTreeNode);
-    int end = lastChildIndex == 0 ? nodesRead : (int) std::ceil((double)lastChildIndex / sizeof(RTreeNode));
-    for (int i = firstChildIndex / sizeof(RTreeNode); i < std::min(nodesRead,end); i++) {
+    treeFile.seekg(firstChildIndex,std::ios::beg);
+    binNodePageRead(treeFile,nodes, (amountOfBytesToRead / sizeof(RTreeNode)) + 1);
+    this->totalSearchIOs+= std::ceil((double)amountOfBytesToRead / (double)diskBlockSize);
+    for (unsigned int i = 0; i <= amountOfBytesToRead / sizeof(RTreeNode); i++) {
         Rect MBR;
         MBR = nodes[i].MBR;
         if (RTree::intersects(region,MBR)) { 
