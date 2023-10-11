@@ -6,7 +6,13 @@
 #include "./algoritmos/NearestXAlgorithm.hpp"
 #include "./disk_manipulation_functions/generateRectangles.hpp"
 
-int main() {
+int main(int argc, char** argv) {
+    int seedRect = 0;
+    int seedQuery = 0;
+    if (argc == 3) {
+        seedRect = std::stoi(argv[1]);
+        seedQuery = std::stoi(argv[2]);
+    }
     std::ofstream outPutFile("output.csv");
     unsigned int totalIoSum = 0;
     for (unsigned int k = 10; k < 26; k++) {
@@ -15,10 +21,10 @@ int main() {
         unsigned int numberOfRects = 1 << k;
         RTreeAlgorithm* nearestX = new NearestXAlgorithm(nodesPerBlock, numberOfRects);
         RTree* tree = new RTree(nodesPerBlock/2, nearestX, numberOfRects);
-        generateRectanglesFile("rects.bin",true,numberOfRects,1,false);
+        generateRectanglesFile("rects.bin",true,numberOfRects,seedRect,false);
         std::ofstream results("results" + std::to_string(k) + ".txt", std::ios::out);
         tree->buildTreeFromFile("rects.bin"	);
-        generateRectanglesFile("querys.bin",true,100,4,true);
+        generateRectanglesFile("querys.bin",true,100,seedQuery,true);
         Rect* querys = new Rect[100];
         std::ifstream querysFile("querys.bin",std::ios::in|std::ios::binary);
         binRectPageRead(querysFile,querys,100);

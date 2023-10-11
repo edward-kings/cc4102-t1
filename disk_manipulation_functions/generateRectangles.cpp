@@ -10,7 +10,7 @@ void generateRectanglesFile(string filename, bool eraseContents, unsigned int am
     std::ofstream rectFile(filename, std::ios::out | std::ios::binary | mode);
     std::random_device rd;
     std::mt19937 gen(rd());
-    gen.seed(seed);
+    if (seed != 0) gen.seed(seed);
     std::uniform_int_distribution<unsigned int> distrib(0U, 500000U);
     Rect* buffer = new Rect[rectanglesPerBlock];
     unsigned int rectangleNumber = 0;
