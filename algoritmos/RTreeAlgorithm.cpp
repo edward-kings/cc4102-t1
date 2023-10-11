@@ -15,9 +15,9 @@ void RTreeAlgorithm::externalMergeSort(std::string filename) {
     Rect* buffer = new Rect[rectanglesPerBlock];
     int chunkNumber = 0;
     unsigned int chunkSize = 0;
+    std::ofstream chunk("chunk_" + std::to_string(chunkNumber) + ".bin", std::ios::out | std::ios::binary | std::ios::trunc);
     while (rectsFile) {
         long sizeRead = binRectPageRead(rectsFile,buffer) / sizeof(Rect);
-        std::ofstream chunk("chunk_" + std::to_string(chunkNumber) + ".bin", std::ios::out | std::ios::binary | std::ios::trunc);
         while (sizeRead > 0) {
             std::sort(buffer, buffer + sizeRead, [this](Rect& rect1, Rect& rect2) -> bool {return this->orderCriteria(rect1,rect2);});
 
@@ -34,9 +34,11 @@ void RTreeAlgorithm::externalMergeSort(std::string filename) {
             sizeRead = binRectPageRead(rectsFile,buffer) / sizeof(Rect);
         }
         if (sizeRead == 0) break;
-        if (chunk.is_open()) chunk.close();
     }
-
+    if (chunk.is_open()) {
+        chunkNumber++;
+        chunk.close();
+    }
     // Step 2: Perform the external merge
     std::vector<std::ifstream> chunks(chunkNumber);
 
