@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
         auto totalDuration = std::chrono::microseconds::zero();
         unsigned int numberOfRects = 1 << k;
         RTreeAlgorithm* nearestX = new NearestXAlgorithm(nodesPerBlock, numberOfRects);
-        RTree* tree = new RTree(nodesPerBlock/2, nearestX, numberOfRects);
+        RTree* tree = new RTree(nodesPerBlock, nearestX, numberOfRects);
         generateRectanglesFile("rects.bin",true,numberOfRects,seedRect,false);
         std::ofstream results("results" + std::to_string(k) + ".txt", std::ios::out);
         tree->buildTreeFromFile("rects.bin"	);
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
             tree->resetTotalSearchIOs();
             output << "Rect (" << query.x1 << "," << query.y1 << "," << query.x2 << "," << query.y2 << ");";
             auto start = std::chrono::high_resolution_clock::now();
-            std::vector<unsigned int> result = tree->search(query);
+            std::vector<Rect> result = tree->search(query);
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end-start);
             totalDuration += duration;
@@ -45,20 +45,9 @@ int main(int argc, char** argv) {
             output << duration.count() << ";" << tree->getTotalSearchIOs() << "\n";
             results << "Query" << i << ": " << query.x1 << " " << query.y1 << " " << query.x2 << " " << query.y2 << std::endl << std::endl;
             if (result.size() > 0) {
-                std::ifstream leafFile("sortedRects.bin",std::ios::in|std::ios::binary);
-                Rect* rects = new Rect[rectanglesPerBlock];
-                binRectPageRead(leafFile,rects);
-                int reads = 1;
                 for (unsigned int j = 0; j < result.size(); j++) {
-                    while (result[j] >= rectanglesPerBlock * reads) {
-                        binRectPageRead(leafFile,rects);
-                        reads++;
-                    }
-                    results << "Leaf at byte " << result[j] << ": " << std::endl;    
-                    results << "Rect: (" << rects[result[j] % rectanglesPerBlock].x1 << "," << rects[result[j] % rectanglesPerBlock].y1 << "," << rects[result[j] % rectanglesPerBlock].x2 << "," << rects[result[j] % rectanglesPerBlock].y2 << ")" << std::endl;
+                    results << "Rect: (" << result[j].x1 << "," << result[j].y1 << "," << result[j].x2 << "," << result[j].y2 << ")" << std::endl;
                 }
-                leafFile.close();
-                delete[] rects;
             } else {
                 results << "No results for this query" << std::endl;
             }
