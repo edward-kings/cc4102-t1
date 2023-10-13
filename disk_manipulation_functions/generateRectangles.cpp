@@ -3,14 +3,18 @@
 #include <string.h>
 #include <random>
 #include <fstream>
-using namespace std;
+#include <chrono>
 
-void generateRectanglesFile(string filename, bool eraseContents, unsigned int amountOfRectangles, unsigned int seed, bool isSetQ) {
+
+void generateRectanglesFile(std::string filename, bool eraseContents, unsigned int amountOfRectangles, unsigned int seed, bool isSetQ) {
     std::ios::openmode mode = eraseContents ? std::ios::trunc : std::ios::app;
     std::ofstream rectFile(filename, std::ios::out | std::ios::binary | mode);
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    if (seed != 0) gen.seed(seed);
+    std::mt19937 gen;
+    if (seed != 0) {
+        gen = std::mt19937(seed);
+    } else {
+        gen = std::mt19937(std::chrono::system_clock::now().time_since_epoch().count());
+    }
     std::uniform_int_distribution<unsigned int> distrib(0U, 500000U);
     Rect* buffer = new Rect[rectanglesPerBlock];
     unsigned int rectangleNumber = 0;
@@ -20,8 +24,8 @@ void generateRectanglesFile(string filename, bool eraseContents, unsigned int am
 
         x1 = distrib(gen);
         y1 = distrib(gen);
-        x2 = min(x1 + (distrib(gen) % maxSideSize),500000U); 
-        y2 = min(y1 + (distrib(gen) % maxSideSize),500000U);
+        x2 = std::min(x1 + (distrib(gen) % maxSideSize),500000U); 
+        y2 = std::min(y1 + (distrib(gen) % maxSideSize),500000U);
 
         rectangleNumber = i % rectanglesPerBlock;
 

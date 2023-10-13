@@ -10,23 +10,31 @@
 #include "../algoritmos/RTreeAlgorithm.hpp"
 #include "../disk_manipulation_functions/binaryFileFunctions.hpp"
 
-
+/**
+ * @brief Clase que representa un RTree.
+ * \param maxNodeCapacity Cantidad máxima de hijos por nodo.
+ * \param algorithm Algoritmo a utilizar para construir el RTree.
+ * \param numberOfRects Cantidad de rectángulos que componen el RTree.
+ * \param totalSearchIOs Cantidad de I/Os realizadas en la última búsqueda.
+ * \param treeFile Puntero al archivo que contiene los nodos internos del RTree.
+ * \param leavesFile Puntero al archivo que contiene las hojas del RTree.
+*/
 class RTree {
   public:
     RTree(int maxNodeCapacity, RTreeAlgorithm* algorithm, unsigned int numberOfRects);
-    std::vector<unsigned int> search(Rect region);
+    std::vector<Rect> search(Rect region);
     void buildTreeFromFile(std::string filename);
     unsigned int getTotalSearchIOs();
     void resetTotalSearchIOs();
-    long rootIndex;
   private:
     unsigned int maxNodeCapacity;
     unsigned int numberOfRects;
     unsigned int totalSearchIOs;
-    std::string treeFileBaseName;
+    std::istream* treeFile;
+    std::istream* leavesFile;
     RTreeAlgorithm* algorithm;
-    void searchRecursive(Rect region, int currentFileIndex, unsigned int firstChildIndex, unsigned int lastChildIndex, std::vector<unsigned int>& result);
     static bool intersects(Rect region, Rect MBR);
+    void searchRecursive(Rect region, long long firstChildIndex, long long lastChildIndex, std::vector<Rect>& result);
 };
 
 
