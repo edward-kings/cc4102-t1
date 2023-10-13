@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <istream>
+#include <algorithm>
 #include <string>
 #include <math.h>
 #include "NearestXAlgorithm.hpp"
@@ -7,177 +9,107 @@
 #include "../disk_manipulation_functions/binaryFileFunctions.hpp"
 #include "../estructuras/RTreeNode.hpp"
 
-NearestXAlgorithm::NearestXAlgorithm(int maxNodeCapacity, unsigned int numberOfRects) {
+/**
+ * @brief Constructor de la clase NearestXAlgorithm.
+ * \param maxNodeCapacity Cantidad máxima de hijos por nodo.
+ * \param numberOfRects Cantidad de rectángulos que componen el RTree.
+*/
+NearestXAlgorithm::NearestXAlgorithm(unsigned int maxNodeCapacity, unsigned int numberOfRects) {
   this->maxNodeCapacity = maxNodeCapacity;
   this->numberOfRects = numberOfRects;
-  this->sortedRectsFileName = "sortedRects.bin";
-  this->treeFileBaseName = "NearestXRTree";
 }
 
-void NearestXAlgorithm::setSortedRectsFileName(std::string sortedRectsFileName) {
-  this->sortedRectsFileName = sortedRectsFileName;
+/**
+ * @brief Getter del archivo que contiene los nodos internos del RTree.
+*/
+std::istream& NearestXAlgorithm::getTreeFile() {
+  return this->treeFile;
 }
 
-std::string NearestXAlgorithm::getTreeFileBaseName() {
-  return this->treeFileBaseName;
+/**
+ * @brief Getter del archivo que contiene las hojas del RTree.
+*/
+std::istream& NearestXAlgorithm::getLeavesFile() {
+  return this->leavesFile;
 }
 
-int NearestXAlgorithm::getNumberOfRects() {
-  return this->numberOfRects;
-}
-
-int NearestXAlgorithm::getMaxNodeCapacity() {
-  return this->maxNodeCapacity;
-}
-
-
-std::string NearestXAlgorithm::getSortedRectsFileName() {
-  return this->sortedRectsFileName;
-}
-
+/**
+ * @brief Método que determina el criterio de ordenamiento de los rectángulos.
+ * Nearest X ordena los rectángulos por su centro en el eje X.
+*/
 bool NearestXAlgorithm::orderCriteria(const Rect& rect1, const Rect& rect2) { 
   int rect1Center = floor(rect1.x1 + rect1.x2 / 2);
   int rect2Center = floor(rect2.x1 + rect2.x2 / 2);
   return rect1Center < rect2Center;
 }
 
-unsigned int NearestXAlgorithm::buildTree(std::string filename) {
-  this->externalMergeSort(filename);
-  
-  std::ifstream sortedRects(this->sortedRectsFileName,std::ios::in | std::ios::binary);
-  Rect* rectBuffer = new Rect[rectanglesPerBlock];
-  RTreeNode* nodeBuffer = new RTreeNode[nodesPerBlock];
-  // amountOfNodes = n/M the maximum amount of internal nodes that can be created from n rectangles at this level
+/**
+ * @brief Método que construye un RTree utilizando el algoritmo NearestX.
+ * \param filename Nombre del archivo de rectángulos.
+*/
+void NearestXAlgorithm::buildTree(std::string filename) {
+  std::fstream rectFile(filename,std::ios::in | std::ios::binary);
+  // Se lee el archivo de rectángulos y se ordenan por su centro en el eje X
+  unsigned int bufferSize = this->numberOfRects;
+  Rect* rectBuffer = new Rect[bufferSize];
+  rectFile.read(reinterpret_cast<char*>(rectBuffer),sizeof(Rect) * bufferSize);
+  rectFile.close();
+  auto orderLambda = [this](const Rect& rect1, const Rect& rect2){ return this->orderCriteria(rect1,rect2); };
+  std::sort(rectBuffer,rectBuffer + bufferSize,orderLambda);
+  std::fstream& sortedRects = this->leavesFile;
+  sortedRects = std::fstream("sortedRects.bin",std::ios::out | std::ios::in | std::ios::binary | std::ios::trunc);
+  sortedRects.write(reinterpret_cast<char*>(rectBuffer),sizeof(Rect) * bufferSize);
+  // amountOfNodes = n/M: cantidad de nodos internos
   unsigned int amountOfNodes = std::ceil((double)numberOfRects / this->maxNodeCapacity);
-  std::string currentFilename = "NearestXRTree0.bin";
-  std::ofstream firstTreeFile("NearestXRTree0.bin",std::ios::out | std::ios::binary | std::ios::in | std::ios::trunc);
   unsigned int nodeNumber = 0;
-  unsigned int blockLimit = 0, lastChildIndex = 0;
-  unsigned int firstChildIndex = 0;
-  int previousRectx1 = 0, previousRecty1 = 0;
-  bool bufferOverflow = false;
+  unsigned int currentRect = 0;
+  // Indica la altura actual del árbol
+  unsigned int currentLevel = 0;
+  std::vector<std::vector<RTreeNode>> nodeBuffer;
+  nodeBuffer.push_back(std::vector<RTreeNode>(amountOfNodes));
   while (nodeNumber < amountOfNodes) {
-    binRectPageRead(sortedRects,rectBuffer);
-    int dataRead = sortedRects.gcount();
-    int currentPos = sortedRects.tellg();
-    // If the current position is -1, we are at the end of the file
-    if (currentPos == -1) {
-      if (sortedRects.eof()) {
-        // And the limit will be based on the amount of data on the last read or whatever was the limit before
-        blockLimit = lastChildIndex == 0 ? dataRead - sizeof(Rect) : std::min(blockLimit,lastChildIndex);
-      }
-    } else {
-        blockLimit = currentPos - (unsigned int) sizeof(Rect);
-    }
-    lastChildIndex = std::min((unsigned int) (firstChildIndex + (this->maxNodeCapacity - 1) * sizeof(Rect)),blockLimit);
-    while (lastChildIndex <= blockLimit) {
       RTreeNode node;
-      node.firstChildIndex = firstChildIndex;
-      node.lastChildIndex = lastChildIndex;
-      // The first index in the buffer is the conversion of the first child index's size in bytes to the size of a Rect
-      unsigned int firstIndexInBuf = (firstChildIndex / sizeof(Rect)) % rectanglesPerBlock;
-      unsigned int lastIndexInBuf = (lastChildIndex / sizeof(Rect)) % rectanglesPerBlock;
-      // If the first index was greater than the last index on the previous iteration, we need to use the previous value of the first index
-      if (bufferOverflow) {
-        node.MBR.x1 = previousRectx1;
-        node.MBR.y1 = previousRecty1;
-        node.MBR.x2 = rectBuffer[lastIndexInBuf].x2;
-        node.MBR.y2 = rectBuffer[lastIndexInBuf].y2;
-        bufferOverflow = false;
-      } else {
-        node.MBR.x1 = rectBuffer[firstIndexInBuf].x1;
-        node.MBR.y1 = rectBuffer[firstIndexInBuf].y1;
-        node.MBR.x2 = rectBuffer[lastIndexInBuf].x2;
-        node.MBR.y2 = rectBuffer[lastIndexInBuf].y2;
-      }
-      nodeBuffer[nodeNumber % nodesPerBlock] = node;
+      node.MBR.x1 = rectBuffer[currentRect].x1;
+      node.MBR.y1 = rectBuffer[currentRect].y1;
+      // Las hojas tienen índices negativos para diferenciarlos de los nodos internos
+      node.firstChildIndex = -(currentRect * sizeof(Rect));
+      currentRect = std::min(currentRect + this->maxNodeCapacity - 1, this->numberOfRects - 1);
+      node.MBR.x2 = rectBuffer[currentRect].x2;
+      node.MBR.y2 = rectBuffer[currentRect].y2;
+      node.lastChildIndex = -(currentRect * sizeof(Rect));
+      nodeBuffer[currentLevel][nodeNumber] = node;
+      currentRect++;
       nodeNumber++;
-      firstChildIndex = lastChildIndex + sizeof(Rect);
-      lastChildIndex = firstChildIndex + (this->maxNodeCapacity - 1) * sizeof(Rect);
-      firstIndexInBuf = (firstChildIndex / sizeof(Rect)) % rectanglesPerBlock;
-      lastIndexInBuf = (lastChildIndex / sizeof(Rect)) % rectanglesPerBlock;
-      // If the next iteration will overflow the buffer, we need to save the first index's value and read the next block
-      if (firstIndexInBuf > lastIndexInBuf) {
-        bufferOverflow = true;
-        previousRectx1 = rectBuffer[firstIndexInBuf].x1;
-        previousRecty1 = rectBuffer[firstIndexInBuf].y1;
-        break;
-      }
-      // A whole page can be written right now
-      if (nodeNumber == nodesPerBlock - 1) {
-        binNodePageWrite(firstTreeFile,nodeBuffer);
-      }
-      if (nodeNumber == amountOfNodes) break;
-    }
   }
-  // The buffer was not filled but we still need to write the remaining nodes
-  if (nodeNumber != nodesPerBlock -1) {
-    binNodePageWrite(firstTreeFile,nodeBuffer,(nodeNumber % nodesPerBlock));
+  currentLevel++;
+  unsigned int currentNodeIndex = 0;
+  // Mientras queden nodos por crear
+  while (amountOfNodes > 1) {
+    amountOfNodes = std::ceil((double)amountOfNodes / this->maxNodeCapacity);
+    nodeBuffer.push_back(std::vector<RTreeNode>(amountOfNodes));
+    for (unsigned int i = 0; i < amountOfNodes; i++) {
+      RTreeNode node;
+      node.MBR.x1 = nodeBuffer[currentLevel - 1][currentNodeIndex].MBR.x1;
+      node.MBR.y1 = nodeBuffer[currentLevel - 1][currentNodeIndex].MBR.y1;
+      node.firstChildIndex = (currentNodeIndex + 1) * sizeof(RTreeNode) * currentLevel;
+      currentNodeIndex = std::min((unsigned long long)(currentNodeIndex + this->maxNodeCapacity - 1),(unsigned long long)(nodeBuffer[currentLevel -1].size() - 1));
+      node.MBR.x2 = nodeBuffer[currentLevel - 1][currentNodeIndex].MBR.x2;
+      node.MBR.y2 = nodeBuffer[currentLevel - 1][currentNodeIndex].MBR.y2;
+      node.lastChildIndex = (currentNodeIndex + 1) * sizeof(RTreeNode) * currentLevel;
+      nodeBuffer[currentLevel][i] = node;
+    }
+    currentLevel++;
+    currentNodeIndex = 0;
   }
   delete[] rectBuffer;
-  delete[] nodeBuffer;
-  firstTreeFile.close();
-  sortedRects.close();
-  return this->buildTreeRecursive(1, nodeNumber, currentFilename);
-}
-
-unsigned int NearestXAlgorithm::buildTreeRecursive(unsigned int fileIndex, unsigned int currentNodeAmount, std::string previousTreeFileName) {
-  // This file is the root
-  if (currentNodeAmount == 1) {
-    return fileIndex - 1;
-  }
-  std::ifstream previousTreeFile(previousTreeFileName,std::ios::in | std::ios::binary);
-  previousTreeFile.seekg(0,std::ios::beg);
-  RTreeNode* previousNodeBuffer = new RTreeNode[nodesPerBlock];
-  RTreeNode* currentNodeBuffer = new RTreeNode[nodesPerBlock];
-  unsigned int amountOfNodes = std::ceil((double)currentNodeAmount / this->maxNodeCapacity);
-  std::string currentFileName = "NearestXRTree" + std::to_string(fileIndex) + ".bin";
-  std::ofstream currentTreeFile(currentFileName,std::ios::out | std::ios::binary | std::ios::trunc);
-  unsigned int nodeNumber = 0;
-  unsigned int firstChildIndex, potentialLastChildIndex, blockLimit, lastChildIndex;
-  firstChildIndex = potentialLastChildIndex = blockLimit = lastChildIndex = 0;
-  unsigned int size = sizeof(RTreeNode);
-  while (nodeNumber < amountOfNodes) {
-    binNodePageRead(previousTreeFile,previousNodeBuffer);    
-    potentialLastChildIndex = firstChildIndex + (this->maxNodeCapacity - 1) * sizeof(RTreeNode);
-    int dataRead = previousTreeFile.gcount();
-    int currentPos = previousTreeFile.tellg();
-    if (currentPos == -1) {
-      if (previousTreeFile.eof()) {
-        blockLimit = lastChildIndex == 0 ? dataRead - (int) sizeof(RTreeNode): std::min(blockLimit,lastChildIndex);
-      }
-    } else {
-      blockLimit = currentPos - (unsigned int) sizeof(RTreeNode);
+  RTreeNode* nodeBufferArray = new RTreeNode[(int)(std::ceil((double)numberOfRects / this->maxNodeCapacity))];
+  std::fstream& nearestXFile = this->treeFile;
+  nearestXFile = std::fstream("NearestXRTree.bin",std::ios::out | std::ios::in |std::ios::binary | std::ios::trunc);
+  for (int i = nodeBuffer.size() - 1; i >= 0; i--) {
+    for (unsigned int j = 0; j < nodeBuffer[i].size(); j++) {
+      nodeBufferArray[j] = nodeBuffer[i][j];
     }
-    lastChildIndex = std::min(potentialLastChildIndex, blockLimit);
-    while (lastChildIndex <= blockLimit) {
-      RTreeNode node;
-      node.firstChildIndex = firstChildIndex;
-      node.lastChildIndex = lastChildIndex;
-      unsigned int firstIndexInBuf = (firstChildIndex / size) % nodesPerBlock;
-      unsigned int lastIndexInBuf = (lastChildIndex / size) % nodesPerBlock;
-      node.MBR.x1 = previousNodeBuffer[firstIndexInBuf].MBR.x1;
-      node.MBR.y1 = previousNodeBuffer[firstIndexInBuf].MBR.y1;
-      node.MBR.x2 = previousNodeBuffer[lastIndexInBuf].MBR.x2;
-      node.MBR.y2 = previousNodeBuffer[lastIndexInBuf].MBR.y2;
-      currentNodeBuffer[nodeNumber % nodesPerBlock] = node;
-      nodeNumber++;
-      firstChildIndex = lastChildIndex + sizeof(RTreeNode);
-      potentialLastChildIndex = firstChildIndex + (this->maxNodeCapacity - 1) * sizeof(RTreeNode);
-      lastChildIndex = std::min(potentialLastChildIndex, blockLimit);
-      if (nodeNumber == nodesPerBlock - 1) {
-        binNodePageWrite(currentTreeFile,currentNodeBuffer);
-        break;
-      }
-      if (nodeNumber == amountOfNodes) break;
-    }
+    nearestXFile.write(reinterpret_cast<char*>(nodeBufferArray),sizeof(RTreeNode) * nodeBuffer[i].size());
   }
-  if (nodeNumber != nodesPerBlock -1) {
-    binNodePageWrite(currentTreeFile,currentNodeBuffer,(nodeNumber % nodesPerBlock));
-  }
-  previousTreeFile.close();
-  currentTreeFile.close();
-  delete[] previousNodeBuffer;
-  delete[] currentNodeBuffer;
-  return this->buildTreeRecursive(fileIndex + 1, nodeNumber, currentFileName);
+  delete[] nodeBufferArray;
 }
