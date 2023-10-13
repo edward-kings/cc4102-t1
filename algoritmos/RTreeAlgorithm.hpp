@@ -6,19 +6,18 @@
 #include "../disk_manipulation_functions/binaryFileFunctions.hpp"
 #include <vector>
 #include <cstdio>
+#include <fstream>
+#include <istream>
 
+/**
+ * @brief Interfaz que representa un algoritmo para construir un RTree.
+*/
 class RTreeAlgorithm {
 public:
   virtual ~RTreeAlgorithm() {}
-  virtual unsigned int buildTree(std::string filename) = 0;
-  virtual std::string getTreeFileBaseName() = 0;
-protected:
-  virtual int getNumberOfRects() = 0;
-  virtual int getMaxNodeCapacity() = 0;
-  virtual bool orderCriteria(const Rect& rect1, const Rect& rect2) = 0;
-  virtual std::string getSortedRectsFileName() = 0;
-  virtual void setSortedRectsFileName(std::string sortedRectsFileName) = 0;
-  void externalMergeSort(std::string filename);
+  virtual void buildTree(std::string filename) = 0;
+  virtual std::istream& getTreeFile() = 0;
+  virtual std::istream& getLeavesFile() = 0;
 };
 
 #endif // RTREE_ALGORITHM_H
