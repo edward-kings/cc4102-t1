@@ -19,13 +19,13 @@ void generateRectanglesFile(std::string filename, bool eraseContents, unsigned i
     Rect* buffer = new Rect[rectanglesPerBlock];
     unsigned int rectangleNumber = 0;
     for (unsigned int i = 0; i < amountOfRectangles; i++) {
-        int x1,y1,x2,y2;
+        int x1, y1, x2, y2;
         int maxSideSize = isSetQ ? 100001U : 101U;
 
         x1 = distrib(gen);
         y1 = distrib(gen);
-        x2 = std::min(x1 + (distrib(gen) % maxSideSize),500000U); 
-        y2 = std::min(y1 + (distrib(gen) % maxSideSize),500000U);
+        x2 = std::min(x1 + (distrib(gen) % maxSideSize), 500000U);
+        y2 = std::min(y1 + (distrib(gen) % maxSideSize), 500000U);
 
         rectangleNumber = i % rectanglesPerBlock;
 
@@ -39,7 +39,7 @@ void generateRectanglesFile(std::string filename, bool eraseContents, unsigned i
         }
     }
     if (rectangleNumber != (rectanglesPerBlock - 1)) {
-            rectFile.write(reinterpret_cast<char*>(buffer), sizeof(Rect) * (rectangleNumber + 1));
+        rectFile.write(reinterpret_cast<char*>(buffer), sizeof(Rect) * (rectangleNumber + 1));
     }
     delete[] buffer;
     rectFile.close();

@@ -5,7 +5,7 @@
  * @brief Estructura que representa un rectángulo.
 */
 struct Rect {
-    int x1,y1,x2,y2;
+    int x1, y1, x2, y2;
 };
 
 #endif

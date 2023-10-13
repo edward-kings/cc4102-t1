@@ -63,7 +63,7 @@ bool RTree::intersects(Rect queryRegion, Rect MBR) {
 */
 std::vector<Rect> RTree::search(Rect region) {
   std::vector<Rect> result;
-  this->searchRecursive(region,0,0,result);
+  this->searchRecursive(region, 0, 0, result);
   return result;
 }
 
@@ -82,28 +82,27 @@ void RTree::searchRecursive(Rect region, long long firstChildIndex, long long la
     long long buffSize = last - first + 1;
     Rect* rectBuffer = new Rect[buffSize];
     std::istream& leavesFile = *this->leavesFile;
-    leavesFile.seekg(firstChildIndex,std::ios::beg);
-    leavesFile.read(reinterpret_cast<char*>(rectBuffer),sizeof(Rect) * buffSize);
-    this->totalSearchIOs+= (unsigned int) std::ceil((double)buffSize / rectanglesPerBlock);
+    leavesFile.seekg(firstChildIndex, std::ios::beg);
+    leavesFile.read(reinterpret_cast<char*>(rectBuffer), sizeof(Rect) * buffSize);
+    this->totalSearchIOs += (unsigned int)std::ceil((double)buffSize / rectanglesPerBlock);
     for (long long i = 0; i < buffSize; i++) {
-      if (RTree::intersects(region,rectBuffer[i])) {
+      if (RTree::intersects(region, rectBuffer[i])) {
         result.push_back(rectBuffer[i]);
       }
     }
     delete[] rectBuffer;
-  }
-  else {
+  } else {
     long long first = firstChildIndex / sizeof(RTreeNode);
     long long last = lastChildIndex / sizeof(RTreeNode);
     long long buffSize = last - first + 1;
     RTreeNode* nodeBuffer = new RTreeNode[buffSize];
     std::istream& treeFile = *this->treeFile;
-    treeFile.seekg(firstChildIndex,std::ios::beg);
-    treeFile.read(reinterpret_cast<char*>(nodeBuffer),sizeof(RTreeNode) * buffSize);
-    this->totalSearchIOs+= (unsigned int) std::ceil((double)buffSize / nodesPerBlock);
+    treeFile.seekg(firstChildIndex, std::ios::beg);
+    treeFile.read(reinterpret_cast<char*>(nodeBuffer), sizeof(RTreeNode) * buffSize);
+    this->totalSearchIOs += (unsigned int)std::ceil((double)buffSize / nodesPerBlock);
     for (long long i = 0; i < buffSize; i++) {
-      if (RTree::intersects(region,nodeBuffer[i].MBR)) {
-        this->searchRecursive(region,nodeBuffer[i].firstChildIndex,nodeBuffer[i].lastChildIndex,result);
+      if (RTree::intersects(region, nodeBuffer[i].MBR)) {
+        this->searchRecursive(region, nodeBuffer[i].firstChildIndex, nodeBuffer[i].lastChildIndex, result);
       }
     }
     delete[] nodeBuffer;

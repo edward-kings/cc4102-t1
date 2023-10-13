@@ -36,7 +36,7 @@ extern unsigned int nodesPerBlock;
  * \param rectanglesToWrite Cantidad de rectángulos a escribir si no es una página completa.
  * \return Cantidad de bytes escritos.
 */
-unsigned int binRectPageWrite(std::ofstream &file, Rect* buffer, unsigned int rectanglesToWrite = rectanglesPerBlock);
+unsigned int binRectPageWrite(std::ofstream& file, Rect* buffer, unsigned int rectanglesToWrite = rectanglesPerBlock);
 
 /**
  * @brief Lee la cantidad de rectángulos que caben en un bloque del disco en la variable buffer.
@@ -45,7 +45,7 @@ unsigned int binRectPageWrite(std::ofstream &file, Rect* buffer, unsigned int re
  * \param rectanglesToRead Cantidad de rectángulos a leer si no es una página completa.
  * \return Cantidad de bytes leídos.
 */
-unsigned int binRectPageRead(std::ifstream &file, Rect* buffer, unsigned int rectanglesToRead = rectanglesPerBlock);
+unsigned int binRectPageRead(std::ifstream& file, Rect* buffer, unsigned int rectanglesToRead = rectanglesPerBlock);
 
 /**
  * @brief Escribe la cantidad de nodos internos que caben en un bloque del disco desde la variable buffer.
@@ -54,7 +54,7 @@ unsigned int binRectPageRead(std::ifstream &file, Rect* buffer, unsigned int rec
  * \param nodesToWrite Cantidad de nodos internos a escribir si no es una página completa.
  * \return Cantidad de bytes escritos.
 */
-unsigned int binNodePageWrite(std::ofstream &file, RTreeNode* buffer, unsigned int nodesToWrite = nodesPerBlock);
+unsigned int binNodePageWrite(std::ofstream& file, RTreeNode* buffer, unsigned int nodesToWrite = nodesPerBlock);
 
 /**
  * @brief Lee la cantidad de nodos internos que caben en un bloque del disco en la variable buffer.
@@ -63,7 +63,7 @@ unsigned int binNodePageWrite(std::ofstream &file, RTreeNode* buffer, unsigned i
  * \param nodesToRead Cantidad de nodos internos a leer si no es una página completa.
  * \return Cantidad de bytes leídos.
 */
-unsigned int binNodePageRead(std::ifstream &file, RTreeNode* buffer, unsigned int nodesToRead = nodesPerBlock);
+unsigned int binNodePageRead(std::ifstream& file, RTreeNode* buffer, unsigned int nodesToRead = nodesPerBlock);
 
 
 #endif

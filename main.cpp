@@ -21,13 +21,13 @@ int main(int argc, char** argv) {
         unsigned int numberOfRects = 1 << k;
         RTreeAlgorithm* nearestX = new NearestXAlgorithm(nodesPerBlock, numberOfRects);
         RTree* tree = new RTree(nodesPerBlock, nearestX, numberOfRects);
-        generateRectanglesFile("rects.bin",true,numberOfRects,seedRect,false);
+        generateRectanglesFile("rects.bin", true, numberOfRects, seedRect, false);
         std::ofstream results("results" + std::to_string(k) + ".txt", std::ios::out);
-        tree->buildTreeFromFile("rects.bin"	);
-        generateRectanglesFile("querys.bin",true,100,seedQuery,true);
+        tree->buildTreeFromFile("rects.bin");
+        generateRectanglesFile("querys.bin", true, 100, seedQuery, true);
         Rect* querys = new Rect[100];
-        std::ifstream querysFile("querys.bin",std::ios::in|std::ios::binary);
-        binRectPageRead(querysFile,querys,100);
+        std::ifstream querysFile("querys.bin", std::ios::in | std::ios::binary);
+        binRectPageRead(querysFile, querys, 100);
         querysFile.close();
         std::stringstream output;
         output << "Queries n = 2^" << k << " ; Método Nearest X" << "\n";
@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
             auto start = std::chrono::high_resolution_clock::now();
             std::vector<Rect> result = tree->search(query);
             auto end = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end-start);
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
             totalDuration += duration;
             ioSum += tree->getTotalSearchIOs();
             totalIoSum += ioSum;

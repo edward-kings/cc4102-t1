@@ -20,21 +20,21 @@
  * \param leavesFile Puntero al archivo que contiene las hojas del RTree.
 */
 class RTree {
-  public:
-    RTree(int maxNodeCapacity, RTreeAlgorithm* algorithm, unsigned int numberOfRects);
-    std::vector<Rect> search(Rect region);
-    void buildTreeFromFile(std::string filename);
-    unsigned int getTotalSearchIOs();
-    void resetTotalSearchIOs();
-  private:
-    unsigned int maxNodeCapacity;
-    unsigned int numberOfRects;
-    unsigned int totalSearchIOs;
-    std::istream* treeFile;
-    std::istream* leavesFile;
-    RTreeAlgorithm* algorithm;
-    static bool intersects(Rect region, Rect MBR);
-    void searchRecursive(Rect region, long long firstChildIndex, long long lastChildIndex, std::vector<Rect>& result);
+public:
+  RTree(int maxNodeCapacity, RTreeAlgorithm* algorithm, unsigned int numberOfRects);
+  std::vector<Rect> search(Rect region);
+  void buildTreeFromFile(std::string filename);
+  unsigned int getTotalSearchIOs();
+  void resetTotalSearchIOs();
+private:
+  unsigned int maxNodeCapacity;
+  unsigned int numberOfRects;
+  unsigned int totalSearchIOs;
+  std::istream* treeFile;
+  std::istream* leavesFile;
+  RTreeAlgorithm* algorithm;
+  static bool intersects(Rect region, Rect MBR);
+  void searchRecursive(Rect region, long long firstChildIndex, long long lastChildIndex, std::vector<Rect>& result);
 };
 
 
