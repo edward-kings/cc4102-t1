@@ -44,7 +44,6 @@ void RTreeAlgorithm::buildTree(std::string filename) {
     currentRect++;
     nodeNumber++;
   }
-  delete[] rectBuffer;
   currentLevel++;
   unsigned int currentNodeIndex = 0;
   // Mientras queden nodos por crear
@@ -77,4 +76,5 @@ void RTreeAlgorithm::buildTree(std::string filename) {
     algorithmTreeFile->write(reinterpret_cast<char*>(nodeBufferArray), sizeof(RTreeNode) * nodeBuffer[i].size());
   }
   delete[] nodeBufferArray;
+  delete[] rectBuffer;
 }

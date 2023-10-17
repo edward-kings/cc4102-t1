@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
             totalDurationHilbert += duration;
             ioSumHilbert += hilbertTree->getTotalSearchIOs();
             totalIoSumHilbert += ioSumHilbert;
-            output << duration.count() << ";" << hilbertTree->getTotalSearchIOs() << "\n";
+            output << duration.count() << ";" << hilbertTree->getTotalSearchIOs() << ";";
             txtHilbert << "Query" << i << ": " << query.x1 << " " << query.y1 << " " << query.x2 << " " << query.y2 << std::endl << std::endl;
             if (resultHilbert.size() > 0) {
                 for (unsigned int j = 0; j < resultHilbert.size(); j++) {

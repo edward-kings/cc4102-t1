@@ -77,11 +77,11 @@ void SortTileRecursiveAlgorithm::preProcess(Rect* rects, unsigned int arraySize)
   auto orderLambda = [this](const Rect& rect1, const Rect& rect2) { return this->orderCriteria(rect1, rect2); };
   auto orderLambda2 = [this](const Rect& rect1, const Rect& rect2) { return this->orderCriteriaY(rect1, rect2); };
   std::stable_sort(rects, rects + arraySize, orderLambda);
-  unsigned int subSetAmount = std::ceil(std::sqrt((double)numberOfRects / maxNodeCapacity));
+  unsigned int subSetAmount = std::floor(std::sqrt((double)numberOfRects / maxNodeCapacity));
   unsigned int subSetSize = subSetAmount * this->maxNodeCapacity;
   unsigned int firstSubSetEnd = subSetSize;
   std::stable_sort(rects, rects + firstSubSetEnd, orderLambda2);
-  for (int i = 1; i < subSetAmount; i++) {
+  for (unsigned int i = 1; i < subSetAmount; i++) {
     unsigned int subsetStart = subSetSize * i + 1;
     unsigned int subsetEnd = std::min(subSetSize * (i+1), numberOfRects);
     std::stable_sort(rects + subsetStart, rects + subsetEnd, orderLambda2);
