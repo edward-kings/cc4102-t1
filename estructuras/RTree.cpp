@@ -21,6 +21,10 @@ RTree::RTree(int maxNodeCapacity, RTreeAlgorithm* algorithm, unsigned int number
   this->totalSearchIOs = 0;
 }
 
+std::string RTree::getAlgorithmName() {
+  return this->algorithm->getAlgorithmName();
+}
+
 /**
  * @brief Método que retorna el contador de I/Os realizadas en la última búsqueda.
 */
@@ -41,8 +45,8 @@ void RTree::resetTotalSearchIOs() {
 */
 void RTree::buildTreeFromFile(std::string filename) {
   this->algorithm->buildTree(filename);
-  this->treeFile = &this->algorithm->getTreeFile();
-  this->leavesFile = &this->algorithm->getLeavesFile();
+  this->treeFile = this->algorithm->getTreeFile();
+  this->leavesFile = this->algorithm->getLeavesFile();
 }
 
 /**
@@ -81,9 +85,9 @@ void RTree::searchRecursive(Rect region, long long firstChildIndex, long long la
     long long last = -lastChildIndex / sizeof(Rect);
     long long buffSize = last - first + 1;
     Rect* rectBuffer = new Rect[buffSize];
-    std::istream& leavesFile = *this->leavesFile;
-    leavesFile.seekg(firstChildIndex, std::ios::beg);
-    leavesFile.read(reinterpret_cast<char*>(rectBuffer), sizeof(Rect) * buffSize);
+    std::istream* leavesFile = this->leavesFile;
+    leavesFile->seekg(firstChildIndex, std::ios::beg);
+    leavesFile->read(reinterpret_cast<char*>(rectBuffer), sizeof(Rect) * buffSize);
     this->totalSearchIOs += (unsigned int)std::ceil((double)buffSize / rectanglesPerBlock);
     for (long long i = 0; i < buffSize; i++) {
       if (RTree::intersects(region, rectBuffer[i])) {
@@ -96,9 +100,9 @@ void RTree::searchRecursive(Rect region, long long firstChildIndex, long long la
     long long last = lastChildIndex / sizeof(RTreeNode);
     long long buffSize = last - first + 1;
     RTreeNode* nodeBuffer = new RTreeNode[buffSize];
-    std::istream& treeFile = *this->treeFile;
-    treeFile.seekg(firstChildIndex, std::ios::beg);
-    treeFile.read(reinterpret_cast<char*>(nodeBuffer), sizeof(RTreeNode) * buffSize);
+    std::istream* treeFile = this->treeFile;
+    treeFile->seekg(firstChildIndex, std::ios::beg);
+    treeFile->read(reinterpret_cast<char*>(nodeBuffer), sizeof(RTreeNode) * buffSize);
     this->totalSearchIOs += (unsigned int)std::ceil((double)buffSize / nodesPerBlock);
     for (long long i = 0; i < buffSize; i++) {
       if (RTree::intersects(region, nodeBuffer[i].MBR)) {

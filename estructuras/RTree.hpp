@@ -24,6 +24,7 @@ public:
   RTree(int maxNodeCapacity, RTreeAlgorithm* algorithm, unsigned int numberOfRects);
   std::vector<Rect> search(Rect region);
   void buildTreeFromFile(std::string filename);
+  std::string getAlgorithmName();
   unsigned int getTotalSearchIOs();
   void resetTotalSearchIOs();
 private:
