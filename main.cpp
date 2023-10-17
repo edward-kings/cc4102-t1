@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
             hilbertTree->resetTotalSearchIOs();
             strTree->resetTotalSearchIOs();
             output << "Rect (" << query.x1 << "," << query.y1 << "," << query.x2 << "," << query.y2 << ");";
-            //system("echo 3 > /proc/sys/vm/drop_caches");
+            system("echo 3 > /proc/sys/vm/drop_caches");
             auto start = std::chrono::high_resolution_clock::now();
             std::vector<Rect> resultNearest = nearestTree->search(query);
             auto end = std::chrono::high_resolution_clock::now();
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
                 txtNearest << "No results for this query" << std::endl;
             }
             txtNearest << std::endl;
-            //system("echo 3 > /proc/sys/vm/drop_caches");
+            system("echo 3 > /proc/sys/vm/drop_caches");
             start = std::chrono::high_resolution_clock::now();
             std::vector<Rect> resultHilbert = hilbertTree->search(query);
             end = std::chrono::high_resolution_clock::now();
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
                 txtHilbert << "No results for this query" << std::endl;
             }
             txtHilbert << std::endl;
-            //system("echo 3 > /proc/sys/vm/drop_caches");
+            system("echo 3 > /proc/sys/vm/drop_caches");
             start = std::chrono::high_resolution_clock::now();
             std::vector<Rect> resultStr = strTree->search(query);
             end = std::chrono::high_resolution_clock::now();
