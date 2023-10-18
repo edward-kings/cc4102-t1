@@ -55,10 +55,14 @@ void RTree::buildTreeFromFile(std::string filename) {
  * \param MBR Rectángulo que representa el MBR de un nodo o el rectángulo de una hoja.
 */
 bool RTree::intersects(Rect queryRegion, Rect MBR) {
+  // Interseccion
   bool xOverlap = queryRegion.x2 >= MBR.x1 && queryRegion.x1 <= MBR.x2;
   bool yOverlap = queryRegion.y2 >= MBR.y1 && queryRegion.y1 <= MBR.y2;
 
-  return xOverlap && yOverlap;
+  // Adentro
+  bool xInside = queryRegion.x1 < MBR.x1 && MBR.x2 < queryRegion.x2 && queryRegion.y1 < MBR.y1 && MBR.y2 < queryRegion.y2;
+
+  return (xOverlap && yOverlap) || xInside;
 }
 
 /**
@@ -105,7 +109,7 @@ void RTree::searchRecursive(Rect region, long long firstChildIndex, long long la
     treeFile->read(reinterpret_cast<char*>(nodeBuffer), sizeof(RTreeNode) * buffSize);
     this->totalSearchIOs += (unsigned int)std::ceil((double)buffSize / nodesPerBlock);
     for (long long i = 0; i < buffSize; i++) {
-      if (RTree::intersects(region, nodeBuffer[i].MBR)) {
+      if (RTree::intersects(region, nodeBuffer[i].MBR) || RTree::intersects(nodeBuffer[i].MBR, region)) {
         this->searchRecursive(region, nodeBuffer[i].firstChildIndex, nodeBuffer[i].lastChildIndex, result);
       }
     }
