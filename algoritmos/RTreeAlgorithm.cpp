@@ -77,4 +77,52 @@ void RTreeAlgorithm::buildTree(std::string filename) {
   }
   delete[] nodeBufferArray;
   delete[] rectBuffer;
+  this->ensureDifferentChildren();
+}
+
+/**
+ * @brief Método que se encarga de asegurar que todos los nodos tengan hijos diferentes.
+*/
+void RTreeAlgorithm::ensureDifferentChildren() {
+  std::fstream treeFile(this->getAlgorithmName() + "RTree.bin", std::ios::out | std::ios::in | std::ios::binary);
+  treeFile.seekg(0, std::ios::end);
+  unsigned int fileSize = treeFile.tellg();
+  treeFile.seekg(0, std::ios::beg);
+  unsigned int nodeSize = sizeof(RTreeNode);
+  unsigned int maxNodeCapacity = this->getMaxNodeCapacity();
+  unsigned int nodesPerBlock = diskBlockSize / nodeSize;
+  unsigned int blocks = std::ceil((double)fileSize / diskBlockSize);
+  unsigned int currentNodeIndex = 0;
+  for (unsigned int i = 0; i < blocks; i++) {
+    unsigned int nodesInBlock = (i == blocks - 1) ? std::ceil((double)(fileSize % diskBlockSize) / nodeSize) : nodesPerBlock;
+    RTreeNode* nodeBuffer = new RTreeNode[nodesInBlock];
+    treeFile.read(reinterpret_cast<char*>(nodeBuffer), nodeSize * nodesInBlock);
+    for (unsigned int j = 0; j < nodesInBlock; j++) {
+      RTreeNode& node = nodeBuffer[j];
+      if (node.firstChildIndex < 0) {
+        continue;
+      }
+      unsigned int firstChildIndex = std::abs(node.firstChildIndex) / nodeSize;
+      unsigned int lastChildIndex = std::abs(node.lastChildIndex) / nodeSize;
+      for (unsigned int k = firstChildIndex; k <= lastChildIndex; k++) {
+        if (k >= nodesInBlock) {
+         break; // stop looping if k is out of bounds
+        }
+        RTreeNode& childNode = nodeBuffer[k];
+        if (childNode.firstChildIndex < 0) {
+          continue;
+        }
+        if (k == j) {
+          childNode.firstChildIndex = -1;
+          childNode.lastChildIndex = -1;
+        } else {
+          childNode.firstChildIndex = (k + 1) * nodeSize;
+          childNode.lastChildIndex = (k + 1) * nodeSize;
+        }
+      }
+    }
+    treeFile.seekp(i * diskBlockSize, std::ios::beg);
+    treeFile.write(reinterpret_cast<char*>(nodeBuffer), nodeSize * nodesInBlock);
+    delete[] nodeBuffer;
+  }
 }

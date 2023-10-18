@@ -26,6 +26,7 @@ private:
   virtual void setTreeFile(std::fstream* fileStream) = 0;
   virtual void setLeavesFile(std::fstream* fileStream) = 0;
   virtual void preProcess(Rect* rectangles, unsigned int arraySize) = 0;
+  void ensureDifferentChildren();
 };
 
 #endif // RTREE_ALGORITHM_H
