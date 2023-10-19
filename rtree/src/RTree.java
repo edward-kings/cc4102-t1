@@ -1,97 +1,124 @@
 import algorithms.RTreeAlgorithm;
-import file.utils.FileObjectIO;
 import structs.RTreeNode;
 import structs.Rectangle;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.ArrayList;
 
-import static java.lang.Math.ceil;
 
+/**
+ * Clase que representa un RTree
+ */
 public class RTree {
-    private int rectanglesPerBlock;
-    private int nodesPerBlock;
-    private int maxChildrenPerNode;
+    private RTreeAlgorithm algorithm;
+    private int totalRectBytesRead = 0;
+    private int totalNodeBytesRead = 0;
+    private int blockSize;
+    private RandomAccessFile rectIO;
+    private RandomAccessFile nodeIO;
 
-    RTreeAlgorithm algorithm;
-    private int numberOfRects;
-    private int totalSearchIOs = 0;
-    RandomAccessFile leavesFile;
-    RandomAccessFile treeFile;
+    private DataInputStream rectInputStream;
+    private DataInputStream nodeInputStream;
 
-    public RTree(int maxChildrenPerNode, RTreeAlgorithm algorithm, int numberOfRects, int rectanglesPerBlock, int nodesPerBlock) {
-        this.maxChildrenPerNode = maxChildrenPerNode;
+    /**
+     * Constructor de la clase RTree
+     * @param algorithm Algoritmo de construcción de RTree
+     * @param rectanglesPerBlock Cantidad de rectángulos por bloque de disco
+     * @param nodesPerBlock Cantidad de nodos por bloque de disco
+     */
+    public RTree(RTreeAlgorithm algorithm, int diskBlockSize) {
         this.algorithm = algorithm;
-        this.numberOfRects = numberOfRects;
-        this.rectanglesPerBlock = rectanglesPerBlock;
-        this.nodesPerBlock = nodesPerBlock;
+        this.blockSize = diskBlockSize;
     }
 
-    public void setAlgorithm(RTreeAlgorithm algorithm) {
-        this.algorithm = algorithm;
+    public int getTotalBytesRead() {
+        return totalNodeBytesRead + totalRectBytesRead;
     }
 
-    public String getAlgorithmName() {
-        return this.algorithm.getAlgorithmName();
+    public void resetTotalBytesRead() {
+        totalRectBytesRead = 0;
+        totalNodeBytesRead = 0;
     }
-
-    public int getTotalSearchIOs() {
-        return totalSearchIOs;
+    public int getTotalIOs() {
+        int nodeIos = (int) Math.ceil((double) totalNodeBytesRead / (double) blockSize);
+        int rectIos = (int) Math.ceil((double) totalRectBytesRead / (double) blockSize);
+        return nodeIos + rectIos;
     }
-
-    public void resetTotalSearchIOs() {
-        totalSearchIOs = 0;
-    }
-
-    public void buildTreeFromFile(String filename) throws IOException {
+    /**
+     * Construye el RTree a partir de un archivo de rectángulos
+     * @param filename Nombre del archivo de rectángulos
+     * @throws Exception Si ocurre un error al leer el archivo
+     */
+    public void buildTreeFromFile(String filename) throws Exception {
         this.algorithm.buildTree(filename);
-        leavesFile = this.algorithm.getLeavesFile();
-        treeFile = this.algorithm.getTreeFile();
+        RandomAccessFile leavesFile = this.algorithm.getLeavesFile();
+        RandomAccessFile treeFile = this.algorithm.getTreeFile();
+        this.rectIO = leavesFile;
+        this.rectInputStream = new DataInputStream(new FileInputStream(leavesFile.getFD()));
+        this.nodeIO = treeFile;
+        this.nodeInputStream = new DataInputStream(new FileInputStream(treeFile.getFD()));
     }
 
-    public ArrayList<Rectangle> search(Rectangle query) throws IOException {
+    /**
+     * Busca los rectángulos que intersectan con el rectángulo query
+     * @param query Área sobre la cual se realiza la búsqueda
+     * @return Lista de rectángulos que intersectan con query
+     * @throws Exception Si ocurre un error al leer el archivo
+     */
+    public ArrayList<Rectangle> search(Rectangle query) throws Exception {
         ArrayList<Rectangle> result = new ArrayList<>();
         this.searchRecursive(query, 0, 0, result);
         return result;
     }
 
-    private void searchRecursive(Rectangle query, long firstChildIndex, long lastChildIndex, ArrayList<Rectangle> result) throws IOException {
+    /**
+     * Realiza la búsqueda recursiva de los rectángulos que intersectan con el rectángulo query
+     * @param query Área sobre la cual se realiza la búsqueda
+     * @param firstChildIndex Índice del primer hijo del nodo actual
+     * @param lastChildIndex Índice del último hijo del nodo actual
+     * @param result Lista de rectángulos que intersectan con query
+     * @throws Exception Si ocurre un error al leer el archivo
+     */
+    private void searchRecursive(Rectangle query, long firstChildIndex, long lastChildIndex, ArrayList<Rectangle> result) throws Exception {
         // Si los hijos son hojas
         if (firstChildIndex < 0 || lastChildIndex < 0) {
-            FileObjectIO<Rectangle> rectIo = new FileObjectIO<>(new Rectangle(0,0,0,0));
-            int rectangleByteSize = rectIo.calculateObjectSize();
+            int rectangleByteSize = Rectangle.SIZE;
             long first = -firstChildIndex / rectangleByteSize;
             long last = -lastChildIndex / rectangleByteSize;
             long buffSize = last - first + 1;
-            Rectangle[] rectBuffer;
-            rectBuffer = rectIo.readObjectArrayFromFile(leavesFile, (int) firstChildIndex);
-            this.totalSearchIOs += (int)ceil((double)buffSize / rectanglesPerBlock);
+            this.rectIO.seek(-firstChildIndex);
             for (int i = 0; i < buffSize; i++) {
-                if (query.intersects(rectBuffer[i])) {
-                    result.add(rectBuffer[i]);
+                Rectangle rect = Rectangle.deserialize(rectInputStream);
+                if (query.intersects(rect) || rect.intersects(query)) {
+                    result.add(rect);
                 }
             }
+            this.totalRectBytesRead += Math.max(-lastChildIndex - -firstChildIndex, Rectangle.SIZE);
         } else {
-            FileObjectIO<RTreeNode> nodeIo = new FileObjectIO<>(new RTreeNode(new Rectangle(0,0,0,0),0,0));
-            int nodeByteSize = nodeIo.calculateObjectSize();
+            int nodeByteSize = RTreeNode.SIZE;
             long first = firstChildIndex / nodeByteSize;
             long last = lastChildIndex / nodeByteSize;
             long buffSize = last - first + 1;
-            RTreeNode[] nodeBuffer = new RTreeNode[(int) buffSize];
+            this.nodeIO.seek(firstChildIndex);
             for (int i = 0; i < buffSize ; i++) {
-                nodeBuffer[i] = nodeIo.readObjectFromFile(treeFile, (int) firstChildIndex);
-            }
-            this.totalSearchIOs += (int)ceil((double)buffSize / nodesPerBlock);
-            for (int i = 0; i < buffSize; i++) {
-                if (query.intersects(nodeBuffer[i].getMBR())) {
-                    this.searchRecursive(query, nodeBuffer[i].getFirstChildIndex(), nodeBuffer[i].getLastChildIndex(), result);
+                RTreeNode node = RTreeNode.deserialize(nodeInputStream);
+                if (query.intersects(node.getMBR()) || node.getMBR().intersects(query)) {
+                    this.searchRecursive(query, node.getFirstChildIndex(), node.getLastChildIndex(), result);
                 }
             }
+            this.totalNodeBytesRead += Math.max(lastChildIndex - firstChildIndex, RTreeNode.SIZE);
         }
     }
 
+    /**
+     * Cierra los archivos abiertos
+     * @throws IOException Si ocurre un error al cerrar los archivos
+     */
     public void cleanup() throws IOException {
         this.algorithm.cleanup();
+        this.nodeIO.close();
+        this.rectIO.close();
+        this.nodeInputStream.close();
+        this.rectInputStream.close();
     }
 }

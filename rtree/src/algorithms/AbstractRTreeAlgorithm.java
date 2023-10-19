@@ -1,41 +1,52 @@
 package algorithms;
 
-import file.utils.FileObjectIO;
+
 import structs.RTreeNode;
 import structs.Rectangle;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import static java.lang.Integer.min;
 import static java.lang.Math.ceil;
 
-public abstract class AbstractTreeAlgorithm implements RTreeAlgorithm {
+/**
+ * Clase abstracta para un algoritmo de construcción de RTree
+ */
+public abstract class AbstractRTreeAlgorithm implements RTreeAlgorithm {
     private RandomAccessFile leavesFileIn = null;
     private RandomAccessFile treeFileIn = null;
 
     protected int numberOfRects;
     protected int maxChildrenPerNode;
-
-    public AbstractTreeAlgorithm(int numberOfRects, int maxChildrenPerNode) {
+    /**
+     * Constructor de la clase AbstractRTreeAlgorithm
+     * @param numberOfRects Cantidad de rectángulos
+     * @param maxChildrenPerNode Cantidad máxima de hijos por nodo
+     */
+    public AbstractRTreeAlgorithm(int numberOfRects, int maxChildrenPerNode) {
         this.numberOfRects = numberOfRects;
         this.maxChildrenPerNode = maxChildrenPerNode;
     }
     @Override
-    public void buildTree(String filename) throws IOException {
-        Rectangle[] rects;
+    public void buildTree(String filename) throws Exception {
+        Rectangle[] rects = new Rectangle[numberOfRects];
         try(FileInputStream fileInputStream = new FileInputStream(filename);
-            ObjectInputStream rectInputStream = new ObjectInputStream(fileInputStream)) {
-            rects = (Rectangle[]) rectInputStream.readObject();
-        } catch (IOException | ClassNotFoundException e) {
+            DataInputStream rectInputStream = new DataInputStream(fileInputStream)) {
+            for (int i = 0; i < numberOfRects; i++) {
+                Rectangle rect = Rectangle.deserialize(rectInputStream);
+                rects[i] = rect;
+            }
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        this.preProcessing(rects);
+        this.rectPreProcessing(rects);
         String leavesFileName = "sortedRects" + this.getAlgorithmName() + ".bin";
         try (FileOutputStream fileOutput = new FileOutputStream(leavesFileName);
-            ObjectOutputStream rectOutput = new ObjectOutputStream(fileOutput)) {
-            rectOutput.writeObject(rects);
+            DataOutputStream rectOutput = new DataOutputStream(fileOutput)) {
+            for(Rectangle rect: rects) {
+                rect.serialize(rectOutput);
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -48,8 +59,7 @@ public abstract class AbstractTreeAlgorithm implements RTreeAlgorithm {
         int currentLevel = 0;
         ArrayList<RTreeNode[]> nodeBuffer = new ArrayList<>();
         nodeBuffer.add(new RTreeNode[amountOfNodes]);
-        FileObjectIO<Rectangle> objectIO = new FileObjectIO<>(new Rectangle(0,0,0,0));
-        int rectByteSize = objectIO.calculateObjectSize();
+        int rectByteSize = Rectangle.SIZE;
         while (nodeNumber < amountOfNodes) {
             long firstChildIndex =  - ((long) currentRect * rectByteSize);
             currentRect = min(currentRect + maxChildrenPerNode - 1, numberOfRects - 1);
@@ -62,8 +72,7 @@ public abstract class AbstractTreeAlgorithm implements RTreeAlgorithm {
         currentLevel++;
         int currentNodeIndex = 0;
         // Mientras queden nodos por crear
-        FileObjectIO<RTreeNode> nodeObjectIO = new FileObjectIO<>(new RTreeNode(new Rectangle(0,0,0,0),0,0));
-        int nodeByteSize = nodeObjectIO.calculateObjectSize();
+        int nodeByteSize = RTreeNode.SIZE;
         while (amountOfNodes > 1) {
             amountOfNodes = (int) ceil((double)amountOfNodes / maxChildrenPerNode);
             nodeBuffer.add(new RTreeNode[amountOfNodes]);
@@ -75,17 +84,21 @@ public abstract class AbstractTreeAlgorithm implements RTreeAlgorithm {
                 nodeBuffer.get(currentLevel)[i] = node;
                 currentNodeIndex ++;
             }
+            this.nodePreProcessing(nodeBuffer.get(currentLevel));
             currentLevel++;
             currentNodeIndex = 0;
         }
-        FileOutputStream algorithmTreeFile = new FileOutputStream(this.getAlgorithmName() + "RTree.bin", false);
-        for (int i = nodeBuffer.size() - 1; i >= 0; i--) {
-            RTreeNode[] currentArray = Arrays.copyOf(nodeBuffer.get(i), nodeBuffer.get(i).length);
-            nodeObjectIO.writeObjectsToFile(algorithmTreeFile, currentArray);
+        try (FileOutputStream algorithmTreeFile = new FileOutputStream(this.getAlgorithmName() + "RTree.bin");
+             DataOutputStream nodeObjectIO = new DataOutputStream(algorithmTreeFile)) {
+            for( int i = nodeBuffer.size() - 1; i >=0; i--) {
+                for (RTreeNode node : nodeBuffer.get(i)) {
+                    node.serialize(nodeObjectIO);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        algorithmTreeFile.close();
         this.treeFileIn = new RandomAccessFile(this.getAlgorithmName() + "RTree.bin","r");
-
     }
 
     @Override
@@ -102,11 +115,19 @@ public abstract class AbstractTreeAlgorithm implements RTreeAlgorithm {
     public abstract String getAlgorithmName();
 
     @Override
-    public abstract void preProcessing(Rectangle[] rects);
+    public abstract void rectPreProcessing(Rectangle[] rects);
+
+    @Override
+    public abstract void nodePreProcessing(RTreeNode[] rects);
 
     @Override
     public void cleanup() throws IOException {
         leavesFileIn.close();
         treeFileIn.close();
+    }
+
+    @Override
+    public int getNumberOfRects() {
+        return numberOfRects;
     }
 }

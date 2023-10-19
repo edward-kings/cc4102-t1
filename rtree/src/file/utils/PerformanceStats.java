@@ -1,18 +1,20 @@
 package file.utils;
 
-import java.time.Duration;
 
+/**
+ * Estadísticas de rendimiento, especificamente tiempo y cantidad de I/Os
+ */
 public class PerformanceStats {
 
-    private Duration algorithmTimes;
+    private long algorithmTime;
     private long algorithmIOs;
 
-    public void updateDuration(Duration newDuration) {
-        algorithmTimes = newDuration;
+    public void updateDuration(long newDuration) {
+        algorithmTime = newDuration;
     }
 
-    public Duration getDuration() {
-        return algorithmTimes;
+    public long getDuration() {
+        return algorithmTime;
     }
 
     public void updateIOs(long newIos) {
