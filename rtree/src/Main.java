@@ -36,8 +36,11 @@ public class Main {
         file.delete();
         for (int i = 10; i < 26; i++) {
             file = new File("results" + i + "NearestX.txt");
+            file.close();
             file = new File("results" + i + "Hilbert.txt");
+            file.close();
             file = new File("results" + i + "SortTileRecursive.txt");
+            file.close();
         }
     }
     /**
