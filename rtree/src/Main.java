@@ -34,6 +34,11 @@ public class Main {
         file.delete();
         file = new File("output.csv");
         file.delete();
+        for (int i = 10; i < 26; i++) {
+            file = new File("results" + i + "NearestX.txt");
+            file = new File("results" + i + "Hilbert.txt");
+            file = new File("results" + i + "SortTileRecursive.txt");
+        }
     }
     /**
      * Ejecuta una consulta sobre un RTree
@@ -58,7 +63,7 @@ public class Main {
         long total = after - before;
         stats.updateDuration(total);
         stats.updateIOs(tree.getTotalIOs());
-        tree.resetTotalBytesRead();
+        tree.resetTotalReads();
         return queryResults;
     }
 
@@ -81,9 +86,9 @@ public class Main {
         for (int k = 10; k < 26; k++) {
             output.println("n = 2^" + k + "; Tiempo NearestX ; IOs NearestX ; Tiempo Hilbert; IOs Hilbert; Tiempo STR; IOS STR;");
             int numberOfRectangles = 1 << k;
-            System.out.println("====================================");
-            System.out.println("n = 2^"+ k + " = " + numberOfRectangles);
-            System.out.println("====================================");
+            //System.out.println("====================================");
+            //System.out.println("n = 2^"+ k + " = " + numberOfRectangles);
+            //System.out.println("====================================");
             RTreeAlgorithm[] algorithms = new RTreeAlgorithm[3];
             algorithms[0] = new NearestXAlgorithm(numberOfRectangles,nodesPerBlock);
             algorithms[1] = new HilbertAlgorithm(numberOfRectangles,nodesPerBlock);
@@ -102,8 +107,8 @@ public class Main {
             String[] queriesAsString = new String[100];
             for (int i = 0; i < 3; i++) {
                 finalStats[i] = new StatsContainer();
-                RTree tree = new RTree(algorithms[i], diskBlockSize);
-
+                RTree tree = new RTree(algorithms[i]);
+                PrintWriter resultsTxt = new PrintWriter("results" + k + algorithms[i].getAlgorithmName() +".txt");
                 tree.buildTreeFromFile("rects.bin");
                 for (int j = 0; j < 100; j++) {
                     PerformanceStats queryStats = new PerformanceStats();
@@ -113,15 +118,20 @@ public class Main {
                     }
                     ArrayList<Rectangle> results = executeQuery(tree,query,queryStats);
                     finalStats[i].addPerformanceStats(queryStats);
-                    System.out.print("Query: ");
-                    System.out.println(query);
+                    //System.out.print("Query: ");
+                    //System.out.println(query);
+                    resultsTxt.println("Query: " + query);
                     for (Rectangle r : results) {
-                        System.out.println(r);
+                        //System.out.println(r);
+                        resultsTxt.println(r);
                     }
                     if (results.size() == 0) {
-                        System.out.println("No results");
+                        //System.out.println("No results");
+                        resultsTxt.println("No results");
                     }
                 }
+                resultsTxt.flush();
+                resultsTxt.close();
                 tree.cleanup();
             }
             String[][] rows = new String[3][100];

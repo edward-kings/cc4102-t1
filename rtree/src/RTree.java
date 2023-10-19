@@ -11,9 +11,7 @@ import java.util.ArrayList;
  */
 public class RTree {
     private RTreeAlgorithm algorithm;
-    private int totalRectBytesRead = 0;
-    private int totalNodeBytesRead = 0;
-    private int blockSize;
+    private int totalReads = 0;
     private RandomAccessFile rectIO;
     private RandomAccessFile nodeIO;
 
@@ -26,23 +24,15 @@ public class RTree {
      * @param rectanglesPerBlock Cantidad de rectángulos por bloque de disco
      * @param nodesPerBlock Cantidad de nodos por bloque de disco
      */
-    public RTree(RTreeAlgorithm algorithm, int diskBlockSize) {
+    public RTree(RTreeAlgorithm algorithm) {
         this.algorithm = algorithm;
-        this.blockSize = diskBlockSize;
     }
 
-    public int getTotalBytesRead() {
-        return totalNodeBytesRead + totalRectBytesRead;
-    }
-
-    public void resetTotalBytesRead() {
-        totalRectBytesRead = 0;
-        totalNodeBytesRead = 0;
+    public void resetTotalReads() {
+        totalReads = 0;
     }
     public int getTotalIOs() {
-        int nodeIos = (int) Math.ceil((double) totalNodeBytesRead / (double) blockSize);
-        int rectIos = (int) Math.ceil((double) totalRectBytesRead / (double) blockSize);
-        return nodeIos + rectIos;
+        return totalReads;
     }
     /**
      * Construye el RTree a partir de un archivo de rectángulos
@@ -93,7 +83,7 @@ public class RTree {
                     result.add(rect);
                 }
             }
-            this.totalRectBytesRead += Math.max(-lastChildIndex - -firstChildIndex, Rectangle.SIZE);
+            this.totalReads++;
         } else {
             int nodeByteSize = RTreeNode.SIZE;
             long first = firstChildIndex / nodeByteSize;
@@ -106,7 +96,7 @@ public class RTree {
                     this.searchRecursive(query, node.getFirstChildIndex(), node.getLastChildIndex(), result);
                 }
             }
-            this.totalNodeBytesRead += Math.max(lastChildIndex - firstChildIndex, RTreeNode.SIZE);
+            this.totalReads++;
         }
     }
 
