@@ -10,49 +10,14 @@ y 1 archivo de nodos internos con punteros a otros nodos u hojas.
 
 - Python y librerías pandas, seaborn, matplotlib, scipy, csv
 - Jupyter Notebook 
-- Compilador de C++ (como g++)
-- Comando make
+- IDE y compilador de Java
+- Tener más de 4 GB de RAM
 
 ## Instrucciones
 
-Teniendo make correr
-```bash
-$ make
-```
-Para crear todos los ejecutables.
+Abrir su IDE de Java de preferencia y agregar a los `vmArguments` el valor `-Xmx3G` para tener memoria suficiente en el heap al correr el programa
 
-
-Para probar los métodos en conjuntos desde los 2^10 a los 2^25 rectángulos y 100 consultas uniformemente distribuidos con semillas aleatorias ejecutar
-```bash
-$ sudo ./main.exe`
-```
-El cual creara los archivos binarios `rects.bin`, `querys.bin`, `sortedRects*.bin` y archivos `*RTree.bin` donde * es el algoritmo con el que se formó el RTree
-menos 1, estos ultimos contienen los nodos internos del árbol, y la raíz siempre estará en aquel con el número mayor. \
-Una vez creados estos archivos, utilizara el método de búsqueda implementado en `/estructuras/RTree.cpp` para encontrar todos los rectángulos que intersecten con la
-consulta y los irá guardando en archivos de resultados y en un csv con los tiempos e IO/s totales de cada query.
-
-También es posible utilizar semillas fijas corriendolo con
-```bash
-$ sudo ./main.exe <Semilla para R> <Semilla para Q>
-```
-
-Notar que sudo es necesario para ejecutar el comando `echo 3 > /proc/sys/vm/drop_caches`, si se está en windows, es necesario comentar las líneas 56, 74 y 92 para ejecutar el programa (no se limpiará la caché de archivos).
-
-Para hacer limpieza de archivos al recompilar en linux ejectuar
-```bash
-$ make clean
-```
-
-Y en windows
-```bash
-$ make wclean
-```
-
-Se pueden borrar por separado los archivos binarios ejecutando
-```bash
-$ make cleanBin
-```
-O en windows
-```bash
-$ make wcleanBin
-```
+Al compilar el programa y correr la función Main se crearan archivos que contendran entre los 2^10 a los 2^25 rectángulos y 100 consultas uniformemente distribuidos con semillas aleatorias.
+Por defecto se asume un tamaño de disco de 4096 bytes, esto se puede cambiar pasandole argumentos de consola al programa (hacia `argv`). El primer argumento es el tamaño de disco deseado, el segundo, la semilla para el conjunto R y el tercero la semilla para el conjunto Q.
+Los rectangulos se guardarán en los archivos binarios `rects.bin`, `querys.bin`, `sortedRects*.bin` y archivos `*RTree.bin` donde * es el algoritmo con el que se formó el RTree.
+Una vez creados estos archivos, utilizará el método de búsqueda implementado en `rtree/src/structs/RTree.java` para encontrar todos los rectángulos que intersecten con la consulta y los irá guardando en archivos de resultados y en un csv con los tiempos e IO/s totales de cada query.
